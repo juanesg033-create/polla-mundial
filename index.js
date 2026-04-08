@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const crearTablas = require('./src/db/schema');
+const crearAdmin = require('./crearAdmin');
 const authRoutes = require('./src/routes/auth');
 const apiRoutes = require('./src/routes/api');
 const iniciarScheduler = require('./src/scheduler');
@@ -16,13 +17,13 @@ app.get('/', (req, res) => res.json({ mensaje: 'API Polla Mundial - Sector las B
 const iniciar = async () => {
   try {
     await crearTablas();
+    await crearAdmin();
     iniciarScheduler();
     app.listen(process.env.PORT || 3000, () => {
       console.log(`Servidor corriendo en http://localhost:${process.env.PORT || 3000}`);
     });
   } catch (err) {
-    console.error('Error iniciando servidor:', err);
-    process.exit(1);
+    console.error('Error al iniciar:', err.message);
   }
 };
 
