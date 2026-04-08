@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const crearTablas = require('./src/db/schema');
 const crearAdmin = require('./crearAdmin');
+const cargarPartidos = require('./partidos-mundial');
 const authRoutes = require('./src/routes/auth');
 const apiRoutes = require('./src/routes/api');
 const iniciarScheduler = require('./src/scheduler');
@@ -23,13 +24,4 @@ const iniciar = async () => {
   try {
     await crearTablas();
     await crearAdmin();
-    iniciarScheduler();
-    app.listen(process.env.PORT || 3000, () => {
-      console.log(`Servidor corriendo en http://localhost:${process.env.PORT || 3000}`);
-    });
-  } catch (err) {
-    console.error('Error al iniciar:', err.message);
-  }
-};
-
-iniciar();
+    await cargarPartidos(

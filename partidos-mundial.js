@@ -87,9 +87,7 @@ const cargar = async () => {
     console.log(`✅ ${insertados} partidos cargados exitosamente`);
   } catch (err) {
     console.error('Error:', err.message);
-  } finally {
-    process.exit(0);
   }
 };
 
-cargar();
+module.exports = cargar;
