@@ -5,20 +5,19 @@ const pool = require('./src/db');
 const crearAdmin = async () => {
   try {
     const existe = await pool.query('SELECT id FROM usuarios WHERE usuario = $1', ['admin']);
-    if (existe.rows.length) { console.log('El admin ya existe'); process.exit(0); }
+    if (existe.rows.length) {
+      console.log('El admin ya existe');
+      return;
+    }
     const hash = await bcrypt.hash('brisas2026admin', 10);
     await pool.query(
-      'INSERT INTO usuarios (usuario, nombre_display, password_hash, es_admin, nombre_bloqueado) VALUES ($1,$2,$3,TRUE,TRUE)',
-      ['admin', 'Juan Esteban', hash]
+      'INSERT INTO usuarios (usuario, nombre_display, password, es_admin) VALUES ($1, $2, $3, $4)',
+      ['admin', 'Juan Esteban', hash, true]
     );
     console.log('✅ Admin creado exitosamente');
-    console.log('   Usuario:    admin');
-    console.log('   Contraseña: brisas2026admin');
   } catch (err) {
     console.error('Error:', err.message);
-  } finally {
-    process.exit(0);
   }
 };
 
-crearAdmin();
+module.exports = crearAdmin;
