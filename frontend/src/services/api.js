@@ -1,4 +1,4 @@
-"https://laudable-wonder-production-cca2.up.railway.app/api"
+const BASE = "https://laudable-wonder-production-cca2.up.railway.app/api";
 const h = () => ({ 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` });
 
 export const api = {
