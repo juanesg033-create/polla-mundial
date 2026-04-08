@@ -1,0 +1,75 @@
+# Polla Mundial 2026 - Sector las Brisas
+
+## Requisitos
+- Node.js v20 o superior (ya instalado)
+- PostgreSQL (ya instalado)
+
+## Instalación paso a paso
+
+### 1. Descomprime este ZIP
+Descomprime en C:\Users\ci5\ — debe quedar así:
+C:\Users\ci5\polla-mundial\
+
+### 2. Ejecuta el instalador
+Haz doble clic en instalar.bat
+Esto instala todas las dependencias automáticamente.
+
+### 3. Configura la contraseña de PostgreSQL
+Abre el archivo backend\.env en VS Code y cambia:
+  DB_PASSWORD=brisas2026
+Por la contraseña que pusiste al instalar PostgreSQL.
+
+### 4. Inicia el servidor
+Abre PowerShell y ejecuta:
+  cd C:\Users\ci5\polla-mundial\backend
+  node index.js
+
+Debes ver:
+  Conectado a PostgreSQL
+  Tablas creadas exitosamente
+  Scheduler iniciado
+  Servidor corriendo en http://localhost:3000
+
+### 5. Crea el usuario administrador
+Abre OTRA ventana de PowerShell y ejecuta:
+  cd C:\Users\ci5\polla-mundial\backend
+  node crearAdmin.js
+
+Debes ver:
+  Admin creado exitosamente
+  Usuario:    admin
+  Contraseña: brisas2026admin
+
+## Credenciales del admin
+- Usuario: admin
+- Contraseña: brisas2026admin
+
+## Estructura del proyecto
+backend/
+  index.js          -> Servidor principal
+  crearAdmin.js     -> Crea el usuario admin
+  .env              -> Configuración (contraseñas, puertos)
+  src/
+    db/             -> Conexión y tablas de la base de datos
+    controllers/    -> Lógica de cada módulo
+    routes/         -> Rutas de la API
+    middleware/     -> Verificación de tokens
+    scheduler.js    -> Cierre automático 10 min antes
+
+## API disponible
+POST   /api/auth/login              -> Iniciar sesión
+PUT    /api/auth/nombre             -> Actualizar nombre (una vez)
+GET    /api/partidos                -> Listar partidos
+POST   /api/partidos                -> Crear partido (admin)
+PUT    /api/partidos/:id/resultado  -> Ingresar resultado (admin)
+GET    /api/predicciones/mis        -> Mis predicciones
+POST   /api/predicciones            -> Guardar predicción
+GET    /api/clasificacion           -> Tabla general
+GET    /api/pozo                    -> Ver premios
+PUT    /api/pozo                    -> Actualizar pozo (admin)
+GET    /api/especiales/mis          -> Mis especiales
+POST   /api/especiales              -> Guardar especiales
+GET    /api/usuarios                -> Listar usuarios (admin)
+POST   /api/usuarios                -> Crear usuario (admin)
+PUT    /api/usuarios/:id/toggle     -> Bloquear/activar (admin)
+DELETE /api/usuarios/:id            -> Eliminar usuario (admin)
