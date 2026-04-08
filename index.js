@@ -24,4 +24,14 @@ const iniciar = async () => {
   try {
     await crearTablas();
     await crearAdmin();
-    await cargarPartidos(
+    await cargarPartidos();
+    iniciarScheduler();
+    app.listen(process.env.PORT || 3000, () => {
+      console.log(`Servidor corriendo en http://localhost:${process.env.PORT || 3000}`);
+    });
+  } catch (err) {
+    console.error('Error al iniciar:', err.message);
+  }
+};
+
+iniciar();
