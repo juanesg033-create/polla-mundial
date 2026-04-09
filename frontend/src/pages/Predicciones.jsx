@@ -2,6 +2,24 @@ import { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import NavBottom from '../components/NavBottom';
 
+const banderas = {
+  'México': 'mx', 'Ecuador': 'ec', 'Estados Unidos': 'us', 'Cuba': 'cu',
+  'Argentina': 'ar', 'Islandia': 'is', 'Marruecos': 'ma', 'Irak': 'iq',
+  'España': 'es', 'Croacia': 'hr', 'Brasil': 'br', 'Alemania': 'de',
+  'Francia': 'fr', 'Colombia': 'co', 'Portugal': 'pt', 'Argelia': 'dz',
+  'Inglaterra': 'gb-eng', 'Senegal': 'sn', 'Países Bajos': 'nl',
+  'Arabia Saudita': 'sa', 'Uruguay': 'uy', 'Sudáfrica': 'za',
+  'Japón': 'jp', 'Australia': 'au', 'Italia': 'it', 'Chile': 'cl',
+  'Bélgica': 'be', 'Perú': 'pe', 'Canadá': 'ca', 'Suiza': 'ch',
+  'Corea del Sur': 'kr', 'Irán': 'ir', 'Ghana': 'gh', 'Camerún': 'cm',
+};
+
+const getBandera = (pais) => {
+  const codigo = banderas[pais];
+  if (!codigo) return null;
+  return `https://flagcdn.com/w40/${codigo}.png`;
+};
+
 export default function Predicciones() {
   const [partidos, setPartidos] = useState([]);
   const [predicciones, setPredicciones] = useState({});
@@ -105,6 +123,8 @@ export default function Predicciones() {
           const pred = predicciones[p.id] || { s1: 0, s2: 0 };
           const editando = estado === 'abierto' || estado === 'pronto';
           const m = msg[p.id];
+          const banderaLocal = getBandera(p.equipo_local);
+          const banderaVisitante = getBandera(p.equipo_visitante);
 
           return (
             <div key={p.id} className="partido-card">
@@ -123,13 +143,19 @@ export default function Predicciones() {
               )}
 
               <div className="equipos-row">
-                <div className="equipo"><span className="equipo-nombre">{p.equipo_local}</span></div>
+                <div className="equipo">
+                  {banderaLocal && <img src={banderaLocal} alt={p.equipo_local} style={{ width: 32, height: 22, objectFit: 'cover', borderRadius: 3, marginBottom: 4, display: 'block', margin: '0 auto 4px' }} />}
+                  <span className="equipo-nombre">{p.equipo_local}</span>
+                </div>
                 <div className="score-wrap">
                   <input className="score-input" type="number" min="0" max="99" value={pred.s1} disabled={!editando} onChange={e => onChange(p.id, 's1', e.target.value)} />
                   <span className="score-dash">—</span>
                   <input className="score-input" type="number" min="0" max="99" value={pred.s2} disabled={!editando} onChange={e => onChange(p.id, 's2', e.target.value)} />
                 </div>
-                <div className="equipo"><span className="equipo-nombre">{p.equipo_visitante}</span></div>
+                <div className="equipo">
+                  {banderaVisitante && <img src={banderaVisitante} alt={p.equipo_visitante} style={{ width: 32, height: 22, objectFit: 'cover', borderRadius: 3, marginBottom: 4, display: 'block', margin: '0 auto 4px' }} />}
+                  <span className="equipo-nombre">{p.equipo_visitante}</span>
+                </div>
               </div>
 
               {editando && (
