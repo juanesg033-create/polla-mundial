@@ -18,6 +18,7 @@ export default function Admin() {
   const [mostrarForm, setMostrarForm] = useState(false);
   const [msg, setMsg] = useState('');
   const [resultados, setResultados] = useState({});
+  const [confirmar, setConfirmar] = useState(null); // { id, nombre }
 
   useEffect(() => {
     api.getUsuarios().then(d => setUsuarios(Array.isArray(d) ? d : []));
@@ -44,10 +45,12 @@ export default function Admin() {
     api.getUsuarios().then(d => setUsuarios(Array.isArray(d) ? d : []));
   };
 
-  const eliminarUser = async (id, nombre) => {
-    if (!confirm(`¿Eliminar a ${nombre}?`)) return;
-    await api.eliminarUsuario(id);
+  const eliminarUser = async () => {
+    if (!confirmar) return;
+    await api.eliminarUsuario(confirmar.id);
+    setConfirmar(null);
     api.getUsuarios().then(d => setUsuarios(Array.isArray(d) ? d : []));
+    setMsg(`Usuario ${confirmar.nombre} eliminado`);
   };
 
   const actualizarPozo = async () => {
@@ -66,6 +69,27 @@ export default function Admin() {
 
   return (
     <div>
+      {/* Modal confirmación eliminar */}
+      {confirmar && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}>
+          <div style={{ background: 'white', borderRadius: 16, padding: '24px', width: '100%', maxWidth: 320, textAlign: 'center' }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
+            <h3 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 8px' }}>¿Eliminar participante?</h3>
+            <p style={{ fontSize: 13, color: '#666', margin: '0 0 20px' }}>
+              Vas a eliminar a <strong>{confirmar.nombre}</strong> y todas sus predicciones. Esta acción no se puede deshacer.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setConfirmar(null)} style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid #eee', background: '#fafafa', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>
+                Cancelar
+              </button>
+              <button onClick={eliminarUser} style={{ flex: 1, padding: '10px', borderRadius: 8, border: 'none', background: '#E24B4A', color: 'white', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>
+                Sí, eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ background: '#1D9E75', padding: '12px 16px 0' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '14px' }}>
           <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#0F6E56', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color: '#E1F5EE', flexShrink: 0 }}>{initials(usuario?.nombre_display)}</div>
@@ -122,7 +146,7 @@ export default function Admin() {
                 <button onClick={() => toggleUser(u.id)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #eee', background: '#fafafa', cursor: 'pointer', fontSize: 14 }}>
                   {u.activo ? '🔒' : '✓'}
                 </button>
-                <button onClick={() => eliminarUser(u.id, u.nombre_display)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #eee', background: '#fafafa', cursor: 'pointer', fontSize: 14, color: '#E24B4A' }}>
+                <button onClick={() => setConfirmar({ id: u.id, nombre: u.nombre_display })} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #fdd', background: '#fff5f5', cursor: 'pointer', fontSize: 14, color: '#E24B4A' }}>
                   ✕
                 </button>
               </div>
