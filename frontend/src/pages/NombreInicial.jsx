@@ -4,17 +4,29 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 
 const AVATARES = [
-  'adventurer', 'avataaars', 'big-smile', 'bottts', 'croodles',
-  'fun-emoji', 'icons', 'identicon', 'initials', 'lorelei',
-  'micah', 'miniavs', 'notionists', 'open-peeps', 'personas'
+  { seed: 'messi', label: 'Messi' },
+  { seed: 'ronaldo', label: 'Ronaldo' },
+  { seed: 'neymar', label: 'Neymar' },
+  { seed: 'mbappe', label: 'Mbappé' },
+  { seed: 'haaland', label: 'Haaland' },
+  { seed: 'vinicius', label: 'Vinicius' },
+  { seed: 'pedri', label: 'Pedri' },
+  { seed: 'bellingham', label: 'Bellingham' },
+  { seed: 'salah', label: 'Salah' },
+  { seed: 'modric', label: 'Modric' },
+  { seed: 'colombia', label: 'Colombia' },
+  { seed: 'brasil', label: 'Brasil' },
+  { seed: 'argentina', label: 'Argentina' },
+  { seed: 'españa', label: 'España' },
+  { seed: 'francia', label: 'Francia' },
 ];
 
-const getAvatarUrl = (estilo, seed) =>
-  `https://api.dicebear.com/7.x/${estilo}/svg?seed=${seed}&size=80`;
+const getAvatarUrl = (seed) =>
+  `https://api.dicebear.com/7.x/adventurer/svg?seed=${seed}&size=80`;
 
 export default function NombreInicial() {
   const [nombre, setNombre] = useState('');
-  const [avatarElegido, setAvatarElegido] = useState('adventurer');
+  const [avatarElegido, setAvatarElegido] = useState('messi');
   const [confirmar, setConfirmar] = useState(false);
   const [guardado, setGuardado] = useState(false);
   const { actualizarUsuario } = useAuth();
@@ -50,9 +62,10 @@ export default function NombreInicial() {
             <div style={{ marginTop: '1rem' }}>
               <label style={{ fontSize: 13, fontWeight: 600, color: '#444', display: 'block', marginBottom: 8 }}>Elige tu avatar</label>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
-                {AVATARES.map(estilo => (
-                  <div key={estilo} onClick={() => setAvatarElegido(estilo)} style={{ cursor: 'pointer', borderRadius: 12, border: avatarElegido === estilo ? '3px solid #1D9E75' : '3px solid transparent', background: '#f5f5f5', padding: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                    <img src={getAvatarUrl(estilo, nombre || 'polla')} alt={estilo} style={{ width: 48, height: 48, borderRadius: 8 }} />
+                {AVATARES.map(({ seed, label }) => (
+                  <div key={seed} onClick={() => setAvatarElegido(seed)} style={{ cursor: 'pointer', borderRadius: 12, border: avatarElegido === seed ? '3px solid #1D9E75' : '3px solid transparent', background: '#f5f5f5', padding: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                    <img src={getAvatarUrl(seed)} alt={label} style={{ width: 48, height: 48, borderRadius: 8 }} />
+                    <span style={{ fontSize: 9, color: '#666', textAlign: 'center' }}>{label}</span>
                   </div>
                 ))}
               </div>
@@ -60,7 +73,7 @@ export default function NombreInicial() {
 
             {nombre.length >= 2 && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#fafafa', borderRadius: '8px', padding: '10px 12px', margin: '12px 0' }}>
-                <img src={getAvatarUrl(avatarElegido, nombre)} alt="avatar" style={{ width: 40, height: 40, borderRadius: '50%' }} />
+                <img src={getAvatarUrl(avatarElegido)} alt="avatar" style={{ width: 40, height: 40, borderRadius: '50%' }} />
                 <div>
                   <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{nombre}</p>
                   <p style={{ fontSize: 11, color: '#999', margin: 0 }}>Así aparecerás en la clasificación</p>
@@ -81,7 +94,7 @@ export default function NombreInicial() {
         {confirmar && !guardado && (
           <div style={{ textAlign: 'center', marginTop: '1rem' }}>
             <p style={{ fontSize: 14, marginBottom: 12 }}>¿Confirmas que quieres llamarte así?</p>
-            <img src={getAvatarUrl(avatarElegido, nombre)} alt="avatar" style={{ width: 80, height: 80, borderRadius: '50%', marginBottom: 8 }} />
+            <img src={getAvatarUrl(avatarElegido)} alt="avatar" style={{ width: 80, height: 80, borderRadius: '50%', marginBottom: 8 }} />
             <div style={{ background: '#EAF3DE', borderRadius: '8px', padding: '10px 20px', display: 'inline-block', marginBottom: '16px' }}>
               <span style={{ fontSize: 18, fontWeight: 700, color: '#1D9E75' }}>{nombre}</span>
             </div>
