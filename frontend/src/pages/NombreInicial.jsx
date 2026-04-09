@@ -4,22 +4,24 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 
 const AVATARES = [
-  { seed: 'colombia', emoji: '🇨🇴', label: 'Colombia' },
-  { seed: 'brasil', emoji: '🇧🇷', label: 'Brasil' },
-  { seed: 'argentina', emoji: '🇦🇷', label: 'Argentina' },
-  { seed: 'españa', emoji: '🇪🇸', label: 'España' },
-  { seed: 'francia', emoji: '🇫🇷', label: 'Francia' },
-  { seed: 'mexico', emoji: '🇲🇽', label: 'México' },
-  { seed: 'portugal', emoji: '🇵🇹', label: 'Portugal' },
-  { seed: 'alemania', emoji: '🇩🇪', label: 'Alemania' },
-  { seed: 'italia', emoji: '🇮🇹', label: 'Italia' },
-  { seed: 'inglaterra', emoji: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', label: 'Inglaterra' },
-  { seed: 'uruguay', emoji: '🇺🇾', label: 'Uruguay' },
-  { seed: 'japon', emoji: '🇯🇵', label: 'Japón' },
-  { seed: 'paises-bajos', emoji: '🇳🇱', label: 'Países Bajos' },
-  { seed: 'estados-unidos', emoji: '🇺🇸', label: 'EE.UU.' },
-  { seed: 'chile', emoji: '🇨🇱', label: 'Chile' },
+  { seed: 'colombia', codigo: 'co', label: 'Colombia' },
+  { seed: 'brasil', codigo: 'br', label: 'Brasil' },
+  { seed: 'argentina', codigo: 'ar', label: 'Argentina' },
+  { seed: 'españa', codigo: 'es', label: 'España' },
+  { seed: 'francia', codigo: 'fr', label: 'Francia' },
+  { seed: 'mexico', codigo: 'mx', label: 'México' },
+  { seed: 'portugal', codigo: 'pt', label: 'Portugal' },
+  { seed: 'alemania', codigo: 'de', label: 'Alemania' },
+  { seed: 'italia', codigo: 'it', label: 'Italia' },
+  { seed: 'inglaterra', codigo: 'gb-eng', label: 'Inglaterra' },
+  { seed: 'uruguay', codigo: 'uy', label: 'Uruguay' },
+  { seed: 'japon', codigo: 'jp', label: 'Japón' },
+  { seed: 'paises-bajos', codigo: 'nl', label: 'Países Bajos' },
+  { seed: 'estados-unidos', codigo: 'us', label: 'EE.UU.' },
+  { seed: 'chile', codigo: 'cl', label: 'Chile' },
 ];
+
+const getBandera = (codigo) => `https://flagcdn.com/w80/${codigo}.png`;
 
 export default function NombreInicial() {
   const [nombre, setNombre] = useState('');
@@ -29,7 +31,7 @@ export default function NombreInicial() {
   const { actualizarUsuario } = useAuth();
   const navigate = useNavigate();
 
-  const getEmoji = (seed) => AVATARES.find(a => a.seed === seed)?.emoji || '⚽';
+  const getAvatar = (seed) => AVATARES.find(a => a.seed === seed);
 
   const handleGuardar = async () => {
     const data = await api.actualizarNombre(nombre, avatarElegido);
@@ -38,6 +40,8 @@ export default function NombreInicial() {
     actualizarUsuario({ nombre_display: nombre, nombre_bloqueado: true, avatar: avatarElegido });
     setTimeout(() => navigate('/'), 1500);
   };
+
+  const av = getAvatar(avatarElegido);
 
   return (
     <div style={{ minHeight: '100vh', background: 'white' }}>
@@ -61,21 +65,21 @@ export default function NombreInicial() {
             <div style={{ marginTop: '1rem' }}>
               <label style={{ fontSize: 13, fontWeight: 600, color: '#444', display: 'block', marginBottom: 8 }}>¿Cuál es tu selección favorita?</label>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
-                {AVATARES.map(({ seed, emoji, label }) => (
+                {AVATARES.map(({ seed, codigo, label }) => (
                   <div key={seed} onClick={() => setAvatarElegido(seed)} style={{ cursor: 'pointer', borderRadius: 12, border: avatarElegido === seed ? '3px solid #1D9E75' : '3px solid #eee', background: avatarElegido === seed ? '#EAF3DE' : '#fafafa', padding: '8px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                    <span style={{ fontSize: 32 }}>{emoji}</span>
+                    <img src={getBandera(codigo)} alt={label} style={{ width: 48, height: 32, objectFit: 'cover', borderRadius: 4 }} />
                     <span style={{ fontSize: 9, color: '#666', textAlign: 'center', fontWeight: 600 }}>{label}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {nombre.length >= 2 && (
+            {nombre.length >= 2 && av && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#fafafa', borderRadius: '8px', padding: '10px 12px', margin: '12px 0' }}>
-                <span style={{ fontSize: 36 }}>{getEmoji(avatarElegido)}</span>
+                <img src={getBandera(av.codigo)} alt={av.label} style={{ width: 48, height: 32, objectFit: 'cover', borderRadius: 4 }} />
                 <div>
                   <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{nombre}</p>
-                  <p style={{ fontSize: 11, color: '#999', margin: 0 }}>Así aparecerás en la clasificación</p>
+                  <p style={{ fontSize: 11, color: '#999', margin: 0 }}>Hincha de {av.label} · Así aparecerás en la clasificación</p>
                 </div>
               </div>
             )}
@@ -90,12 +94,13 @@ export default function NombreInicial() {
           </>
         )}
 
-        {confirmar && !guardado && (
+        {confirmar && !guardado && av && (
           <div style={{ textAlign: 'center', marginTop: '1rem' }}>
             <p style={{ fontSize: 14, marginBottom: 12 }}>¿Confirmas estos datos?</p>
-            <span style={{ fontSize: 64, display: 'block', marginBottom: 8 }}>{getEmoji(avatarElegido)}</span>
+            <img src={getBandera(av.codigo)} alt={av.label} style={{ width: 80, height: 53, objectFit: 'cover', borderRadius: 8, marginBottom: 8 }} />
             <div style={{ background: '#EAF3DE', borderRadius: '8px', padding: '10px 20px', display: 'inline-block', marginBottom: '16px' }}>
               <span style={{ fontSize: 18, fontWeight: 700, color: '#1D9E75' }}>{nombre}</span>
+              <p style={{ fontSize: 12, color: '#666', margin: '4px 0 0' }}>Hincha de {av.label}</p>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button className="btn-outline" onClick={() => setConfirmar(false)}>Volver</button>
