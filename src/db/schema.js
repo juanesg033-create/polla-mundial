@@ -11,11 +11,13 @@ const crearTablas = async () => {
         nombre_display VARCHAR(100) NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
         nombre_bloqueado BOOLEAN DEFAULT FALSE,
+        avatar VARCHAR(50) DEFAULT 'avatar1',
         activo BOOLEAN DEFAULT TRUE,
         es_admin BOOLEAN DEFAULT FALSE,
         creado_en TIMESTAMP DEFAULT NOW()
       );
     `);
+    await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS avatar VARCHAR(50) DEFAULT 'avatar1';`);
     await client.query(`
       CREATE TABLE IF NOT EXISTS partidos (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
