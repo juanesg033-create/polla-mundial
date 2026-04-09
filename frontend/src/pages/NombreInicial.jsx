@@ -4,33 +4,32 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 
 const AVATARES = [
-  { seed: 'messi', label: 'Messi' },
-  { seed: 'ronaldo', label: 'Ronaldo' },
-  { seed: 'neymar', label: 'Neymar' },
-  { seed: 'mbappe', label: 'Mbappé' },
-  { seed: 'haaland', label: 'Haaland' },
-  { seed: 'vinicius', label: 'Vinicius' },
-  { seed: 'pedri', label: 'Pedri' },
-  { seed: 'bellingham', label: 'Bellingham' },
-  { seed: 'salah', label: 'Salah' },
-  { seed: 'modric', label: 'Modric' },
-  { seed: 'colombia', label: 'Colombia' },
-  { seed: 'brasil', label: 'Brasil' },
-  { seed: 'argentina', label: 'Argentina' },
-  { seed: 'españa', label: 'España' },
-  { seed: 'francia', label: 'Francia' },
+  { seed: 'colombia', emoji: '🇨🇴', label: 'Colombia' },
+  { seed: 'brasil', emoji: '🇧🇷', label: 'Brasil' },
+  { seed: 'argentina', emoji: '🇦🇷', label: 'Argentina' },
+  { seed: 'españa', emoji: '🇪🇸', label: 'España' },
+  { seed: 'francia', emoji: '🇫🇷', label: 'Francia' },
+  { seed: 'mexico', emoji: '🇲🇽', label: 'México' },
+  { seed: 'portugal', emoji: '🇵🇹', label: 'Portugal' },
+  { seed: 'alemania', emoji: '🇩🇪', label: 'Alemania' },
+  { seed: 'italia', emoji: '🇮🇹', label: 'Italia' },
+  { seed: 'inglaterra', emoji: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', label: 'Inglaterra' },
+  { seed: 'uruguay', emoji: '🇺🇾', label: 'Uruguay' },
+  { seed: 'japon', emoji: '🇯🇵', label: 'Japón' },
+  { seed: 'paises-bajos', emoji: '🇳🇱', label: 'Países Bajos' },
+  { seed: 'estados-unidos', emoji: '🇺🇸', label: 'EE.UU.' },
+  { seed: 'chile', emoji: '🇨🇱', label: 'Chile' },
 ];
-
-const getAvatarUrl = (seed) =>
-  `https://api.dicebear.com/7.x/adventurer/svg?seed=${seed}&size=80`;
 
 export default function NombreInicial() {
   const [nombre, setNombre] = useState('');
-  const [avatarElegido, setAvatarElegido] = useState('messi');
+  const [avatarElegido, setAvatarElegido] = useState('colombia');
   const [confirmar, setConfirmar] = useState(false);
   const [guardado, setGuardado] = useState(false);
   const { actualizarUsuario } = useAuth();
   const navigate = useNavigate();
+
+  const getEmoji = (seed) => AVATARES.find(a => a.seed === seed)?.emoji || '⚽';
 
   const handleGuardar = async () => {
     const data = await api.actualizarNombre(nombre, avatarElegido);
@@ -49,7 +48,7 @@ export default function NombreInicial() {
 
       <div style={{ padding: '1.5rem' }}>
         <div className="alerta alerta-warn">
-          <strong>Antes de empezar</strong> — elige tu nombre y avatar. Solo podrás hacerlo una vez.
+          <strong>Antes de empezar</strong> — elige tu nombre y tu selección favorita. Solo podrás hacerlo una vez.
         </div>
 
         {!confirmar && !guardado && (
@@ -60,12 +59,12 @@ export default function NombreInicial() {
             </div>
 
             <div style={{ marginTop: '1rem' }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#444', display: 'block', marginBottom: 8 }}>Elige tu avatar</label>
+              <label style={{ fontSize: 13, fontWeight: 600, color: '#444', display: 'block', marginBottom: 8 }}>¿Cuál es tu selección favorita?</label>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
-                {AVATARES.map(({ seed, label }) => (
-                  <div key={seed} onClick={() => setAvatarElegido(seed)} style={{ cursor: 'pointer', borderRadius: 12, border: avatarElegido === seed ? '3px solid #1D9E75' : '3px solid transparent', background: '#f5f5f5', padding: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                    <img src={getAvatarUrl(seed)} alt={label} style={{ width: 48, height: 48, borderRadius: 8 }} />
-                    <span style={{ fontSize: 9, color: '#666', textAlign: 'center' }}>{label}</span>
+                {AVATARES.map(({ seed, emoji, label }) => (
+                  <div key={seed} onClick={() => setAvatarElegido(seed)} style={{ cursor: 'pointer', borderRadius: 12, border: avatarElegido === seed ? '3px solid #1D9E75' : '3px solid #eee', background: avatarElegido === seed ? '#EAF3DE' : '#fafafa', padding: '8px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                    <span style={{ fontSize: 32 }}>{emoji}</span>
+                    <span style={{ fontSize: 9, color: '#666', textAlign: 'center', fontWeight: 600 }}>{label}</span>
                   </div>
                 ))}
               </div>
@@ -73,7 +72,7 @@ export default function NombreInicial() {
 
             {nombre.length >= 2 && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#fafafa', borderRadius: '8px', padding: '10px 12px', margin: '12px 0' }}>
-                <img src={getAvatarUrl(avatarElegido)} alt="avatar" style={{ width: 40, height: 40, borderRadius: '50%' }} />
+                <span style={{ fontSize: 36 }}>{getEmoji(avatarElegido)}</span>
                 <div>
                   <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{nombre}</p>
                   <p style={{ fontSize: 11, color: '#999', margin: 0 }}>Así aparecerás en la clasificación</p>
@@ -86,15 +85,15 @@ export default function NombreInicial() {
             </div>
 
             <button className="btn-primary" style={{ marginTop: '12px' }} disabled={nombre.length < 2} onClick={() => setConfirmar(true)}>
-              Guardar nombre y avatar
+              Guardar nombre y selección
             </button>
           </>
         )}
 
         {confirmar && !guardado && (
           <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-            <p style={{ fontSize: 14, marginBottom: 12 }}>¿Confirmas que quieres llamarte así?</p>
-            <img src={getAvatarUrl(avatarElegido)} alt="avatar" style={{ width: 80, height: 80, borderRadius: '50%', marginBottom: 8 }} />
+            <p style={{ fontSize: 14, marginBottom: 12 }}>¿Confirmas estos datos?</p>
+            <span style={{ fontSize: 64, display: 'block', marginBottom: 8 }}>{getEmoji(avatarElegido)}</span>
             <div style={{ background: '#EAF3DE', borderRadius: '8px', padding: '10px 20px', display: 'inline-block', marginBottom: '16px' }}>
               <span style={{ fontSize: 18, fontWeight: 700, color: '#1D9E75' }}>{nombre}</span>
             </div>
