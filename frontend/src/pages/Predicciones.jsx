@@ -20,6 +20,16 @@ const getBandera = (pais) => {
   return `https://flagcdn.com/w40/${codigo}.png`;
 };
 
+const getFechaKey = (fecha) => {
+  const d = new Date(fecha);
+  return d.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+};
+
+const getHora = (fecha) => {
+  const d = new Date(fecha);
+  return d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+};
+
 export default function Predicciones() {
   const [partidos, setPartidos] = useState([]);
   const [predicciones, setPredicciones] = useState({});
@@ -53,6 +63,14 @@ export default function Predicciones() {
     return p.fase === tab;
   });
 
+  // Agrupar por fecha
+  const porFecha = partidosFiltrados.reduce((acc, p) => {
+    const key = getFechaKey(p.fecha_hora);
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(p);
+    return acc;
+  }, {});
+
   const estadoPartido = (p) => {
     const cierre = new Date(p.cierre_prediccion);
     if (p.finalizado) return 'finalizado';
@@ -73,11 +91,6 @@ export default function Predicciones() {
     if (res.error) { setMsg(prev => ({ ...prev, [p.id]: { tipo: 'error', texto: res.error } })); return; }
     setGuardados(prev => ({ ...prev, [p.id]: true }));
     setMsg(prev => ({ ...prev, [p.id]: { tipo: 'ok', texto: `${p.equipo_local} ${pred.s1} – ${pred.s2} ${p.equipo_visitante}` } }));
-  };
-
-  const formatFecha = (f) => {
-    const d = new Date(f);
-    return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }) + ' · ' + d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
   };
 
   const msRestantes = (p) => {
@@ -118,73 +131,83 @@ export default function Predicciones() {
           <p style={{ textAlign: 'center', color: '#999', fontSize: 13, padding: '2rem 1rem' }}>Los partidos de esta fase se habilitan cuando avancen los equipos.</p>
         )}
 
-        {partidosFiltrados.map(p => {
-          const estado = estadoPartido(p);
-          const pred = predicciones[p.id] || { s1: 0, s2: 0 };
-          const editando = estado === 'abierto' || estado === 'pronto';
-          const m = msg[p.id];
-          const banderaLocal = getBandera(p.equipo_local);
-          const banderaVisitante = getBandera(p.equipo_visitante);
-
-          return (
-            <div key={p.id} className="partido-card">
-              <div className="partido-header">
-                <span className="partido-info">{p.grupo} · {formatFecha(p.fecha_hora)}</span>
-                {estado === 'abierto' && <span className="badge badge-green">Abierto</span>}
-                {estado === 'pronto' && <span className="badge badge-amber">Cierra pronto</span>}
-                {estado === 'cerrado' && <span className="badge badge-red">En juego</span>}
-                {estado === 'finalizado' && <span className="badge badge-gray">Finalizado</span>}
-              </div>
-
-              {estado === 'pronto' && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, marginBottom: 8 }}>
-                  <span style={{ fontSize: 11, color: '#854F0B', fontWeight: 600 }}>{msRestantes(p)}</span>
-                </div>
-              )}
-
-              <div className="equipos-row">
-                <div className="equipo">
-                  {banderaLocal && <img src={banderaLocal} alt={p.equipo_local} style={{ width: 32, height: 22, objectFit: 'cover', borderRadius: 3, marginBottom: 4, display: 'block', margin: '0 auto 4px' }} />}
-                  <span className="equipo-nombre">{p.equipo_local}</span>
-                </div>
-                <div className="score-wrap">
-                  <input className="score-input" type="number" min="0" max="99" value={pred.s1} disabled={!editando} onChange={e => onChange(p.id, 's1', e.target.value)} />
-                  <span className="score-dash">—</span>
-                  <input className="score-input" type="number" min="0" max="99" value={pred.s2} disabled={!editando} onChange={e => onChange(p.id, 's2', e.target.value)} />
-                </div>
-                <div className="equipo">
-                  {banderaVisitante && <img src={banderaVisitante} alt={p.equipo_visitante} style={{ width: 32, height: 22, objectFit: 'cover', borderRadius: 3, marginBottom: 4, display: 'block', margin: '0 auto 4px' }} />}
-                  <span className="equipo-nombre">{p.equipo_visitante}</span>
-                </div>
-              </div>
-
-              {editando && (
-                <button className="btn-primary" style={{ fontSize: 12, padding: '9px', background: guardados[p.id] ? '#fafafa' : '#1D9E75', color: guardados[p.id] ? '#1D9E75' : 'white', border: guardados[p.id] ? '1px solid #1D9E75' : 'none' }} onClick={() => guardar(p)}>
-                  {guardados[p.id] ? 'Guardado ✓' : 'Guardar predicción'}
-                </button>
-              )}
-
-              {m && (
-                <div className={`alerta ${m.tipo === 'ok' ? 'alerta-ok' : 'alerta-error'}`} style={{ marginTop: 8 }}>
-                  {m.tipo === 'ok' ? 'Predicción: ' : ''}{m.texto}
-                </div>
-              )}
-
-              {!editando && estado === 'cerrado' && !guardados[p.id] && (
-                <div style={{ marginTop: 8, textAlign: 'center', background: '#F1EFE8', color: '#5F5E5A', padding: '8px 12px', borderRadius: 8, fontSize: 12 }}>
-                  No predijiste a tiempo · 0 puntos
-                </div>
-              )}
-
-              {estado === 'finalizado' && p.goles_local !== null && (
-                <div className="alerta alerta-ok" style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Resultado real</span>
-                  <strong>{p.equipo_local} {p.goles_local} – {p.goles_visitante} {p.equipo_visitante}</strong>
-                </div>
-              )}
+        {Object.entries(porFecha).map(([fecha, partidosDia]) => (
+          <div key={fecha}>
+            {/* Header de fecha */}
+            <div style={{ background: '#f0f7f4', padding: '8px 12px', borderLeft: '4px solid #1D9E75', marginBottom: 8, marginTop: 12 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#1D9E75', textTransform: 'capitalize' }}>📅 {fecha}</span>
+              <span style={{ fontSize: 11, color: '#999', marginLeft: 8 }}>{partidosDia.length} partido{partidosDia.length > 1 ? 's' : ''}</span>
             </div>
-          );
-        })}
+
+            {partidosDia.map(p => {
+              const estado = estadoPartido(p);
+              const pred = predicciones[p.id] || { s1: 0, s2: 0 };
+              const editando = estado === 'abierto' || estado === 'pronto';
+              const m = msg[p.id];
+              const banderaLocal = getBandera(p.equipo_local);
+              const banderaVisitante = getBandera(p.equipo_visitante);
+
+              return (
+                <div key={p.id} className="partido-card">
+                  <div className="partido-header">
+                    <span className="partido-info">{p.grupo} · {getHora(p.fecha_hora)}</span>
+                    {estado === 'abierto' && <span className="badge badge-green">Abierto</span>}
+                    {estado === 'pronto' && <span className="badge badge-amber">Cierra pronto</span>}
+                    {estado === 'cerrado' && <span className="badge badge-red">En juego</span>}
+                    {estado === 'finalizado' && <span className="badge badge-gray">Finalizado</span>}
+                  </div>
+
+                  {estado === 'pronto' && (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, marginBottom: 8 }}>
+                      <span style={{ fontSize: 11, color: '#854F0B', fontWeight: 600 }}>{msRestantes(p)}</span>
+                    </div>
+                  )}
+
+                  <div className="equipos-row">
+                    <div className="equipo">
+                      {banderaLocal && <img src={banderaLocal} alt={p.equipo_local} style={{ width: 32, height: 22, objectFit: 'cover', borderRadius: 3, display: 'block', margin: '0 auto 4px' }} />}
+                      <span className="equipo-nombre">{p.equipo_local}</span>
+                    </div>
+                    <div className="score-wrap">
+                      <input className="score-input" type="number" min="0" max="99" value={pred.s1} disabled={!editando} onChange={e => onChange(p.id, 's1', e.target.value)} />
+                      <span className="score-dash">—</span>
+                      <input className="score-input" type="number" min="0" max="99" value={pred.s2} disabled={!editando} onChange={e => onChange(p.id, 's2', e.target.value)} />
+                    </div>
+                    <div className="equipo">
+                      {banderaVisitante && <img src={banderaVisitante} alt={p.equipo_visitante} style={{ width: 32, height: 22, objectFit: 'cover', borderRadius: 3, display: 'block', margin: '0 auto 4px' }} />}
+                      <span className="equipo-nombre">{p.equipo_visitante}</span>
+                    </div>
+                  </div>
+
+                  {editando && (
+                    <button className="btn-primary" style={{ fontSize: 12, padding: '9px', background: guardados[p.id] ? '#fafafa' : '#1D9E75', color: guardados[p.id] ? '#1D9E75' : 'white', border: guardados[p.id] ? '1px solid #1D9E75' : 'none' }} onClick={() => guardar(p)}>
+                      {guardados[p.id] ? 'Guardado ✓' : 'Guardar predicción'}
+                    </button>
+                  )}
+
+                  {m && (
+                    <div className={`alerta ${m.tipo === 'ok' ? 'alerta-ok' : 'alerta-error'}`} style={{ marginTop: 8 }}>
+                      {m.tipo === 'ok' ? 'Predicción: ' : ''}{m.texto}
+                    </div>
+                  )}
+
+                  {!editando && estado === 'cerrado' && !guardados[p.id] && (
+                    <div style={{ marginTop: 8, textAlign: 'center', background: '#F1EFE8', color: '#5F5E5A', padding: '8px 12px', borderRadius: 8, fontSize: 12 }}>
+                      No predijiste a tiempo · 0 puntos
+                    </div>
+                  )}
+
+                  {estado === 'finalizado' && p.goles_local !== null && (
+                    <div className="alerta alerta-ok" style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Resultado real</span>
+                      <strong>{p.equipo_local} {p.goles_local} – {p.goles_visitante} {p.equipo_visitante}</strong>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ))}
       </div>
       <NavBottom />
     </div>
