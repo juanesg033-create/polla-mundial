@@ -25,12 +25,24 @@ export default function Login() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'white' }}>
-      <div style={{ background: '#1D9E75', padding: '2rem 1.5rem 2.5rem', textAlign: 'center' }}>
-        <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#0F6E56', margin: '0 auto 12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ fontSize: 28 }}>⚽</span>
-        </div>
-        <h1 style={{ color: '#E1F5EE', fontSize: '20px', fontWeight: 600, margin: '0 0 4px' }}>Polla del Mundial 2026</h1>
-        <p style={{ color: '#9FE1CB', fontSize: '13px', margin: 0 }}>Sector las Brisas - Medellin</p>
+      <div style={{
+        position: 'relative',
+        height: '220px',
+        overflow: 'hidden',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <img
+          src="/preview.png"
+          alt="Polla Comunal"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'center top'
+          }}
+        />
       </div>
 
       <div style={{ padding: '1.5rem' }}>
