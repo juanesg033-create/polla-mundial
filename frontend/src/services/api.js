@@ -3,7 +3,8 @@ const h = () => ({ 'Content-Type': 'application/json', Authorization: `Bearer ${
 
 export const api = {
   login: (usuario, password) => fetch(`${BASE}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ usuario, password }) }).then(r => r.json()),
-  actualizarNombre: (nombre_display) => fetch(`${BASE}/auth/nombre`, { method: 'PUT', headers: h(), body: JSON.stringify({ nombre_display }) }).then(r => r.json()),
+  actualizarNombre: (nombre_display, avatar) => fetch(`${BASE}/auth/nombre`, { method: 'PUT', headers: h(), body: JSON.stringify({ nombre_display, avatar }) }).then(r => r.json()),
+  actualizarAvatar: (avatar) => fetch(`${BASE}/auth/avatar`, { method: 'PUT', headers: h(), body: JSON.stringify({ avatar }) }).then(r => r.json()),
   getPartidos: () => fetch(`${BASE}/partidos`, { headers: h() }).then(r => r.json()),
   crearPartido: (data) => fetch(`${BASE}/partidos`, { method: 'POST', headers: h(), body: JSON.stringify(data) }).then(r => r.json()),
   ingresarResultado: (id, gl, gv) => fetch(`${BASE}/partidos/${id}/resultado`, { method: 'PUT', headers: h(), body: JSON.stringify({ goles_local: gl, goles_visitante: gv }) }).then(r => r.json()),
