@@ -6,13 +6,27 @@ const banderas = {
   'México': 'mx','Ecuador': 'ec','Estados Unidos': 'us','Cuba': 'cu',
   'Argentina': 'ar','Islandia': 'is','Marruecos': 'ma','Irak': 'iq',
   'España': 'es','Croacia': 'hr','Brasil': 'br','Alemania': 'de',
-  'Francia': 'fr','Colombia': 'co','Portugal': 'pt','Argelia': 'dz'
+  'Francia': 'fr','Colombia': 'co','Portugal': 'pt','Argelia': 'dz',
+  'Inglaterra': 'gb-eng','Senegal': 'sn','Países Bajos': 'nl',
+  'Arabia Saudita': 'sa','Uruguay': 'uy','Sudáfrica': 'za',
+  'Japón': 'jp','Australia': 'au','Italia': 'it','Chile': 'cl',
+  'Bélgica': 'be','Perú': 'pe','Canadá': 'ca','Suiza': 'ch',
+  'Corea del Sur': 'kr','Irán': 'ir','Ghana': 'gh','Camerún': 'cm',
+  'Escocia': 'gb-sct','Uzbekistán': 'uz','Qatar': 'qa',
+  'Rep. Checa': 'cz','Haití': 'ht','Bosnia y Herzegovina': 'ba',
+  'Turquía': 'tr','Curazao': 'cw','Costa de Marfil': 'ci',
+  'Túnez': 'tn','Suecia': 'se','Nueva Zelanda': 'nz',
+  'Cabo Verde': 'cv','Noruega': 'no','Austria': 'at',
+  'Jordania': 'jo','RD Congo': 'cd','Panamá': 'pa',
+  'Paraguay': 'py','Egipto': 'eg'
 };
 
 const getBandera = (pais) => {
   const codigo = banderas[pais];
   return codigo ? `https://flagcdn.com/w40/${codigo}.png` : null;
 };
+
+const esPlaceholder = (nombre) => /\d[A-Z]/.test(nombre);
 
 const getFechaKey = (fecha) => {
   const d = new Date(fecha);
@@ -43,7 +57,6 @@ export default function Predicciones() {
     api.getPartidos().then(data => {
       if (!Array.isArray(data)) return;
 
-      // eliminar duplicados
       let unicos = Array.from(
         new Map(
           data.map(p => [
@@ -53,7 +66,7 @@ export default function Predicciones() {
         ).values()
       );
 
-      // 🔥 detectar si NO hay 16avos
+      // 🔥 si no hay 16avos, los creamos
       const hay16avos = unicos.some(p => p.fase === '16avos');
 
       if (!hay16avos) {
@@ -142,13 +155,18 @@ export default function Predicciones() {
   return (
     <div>
 
+      {/* HEADER */}
       <div style={{ background: '#1D9E75', padding: '12px 16px' }}>
         <h1 style={{ color: '#E1F5EE', fontSize: 15, margin: 0 }}>
           Mis predicciones
         </h1>
+        <p style={{ color: '#9FE1CB', fontSize: 12, margin: 0 }}>
+          Sector las Brisas · Mundial 2026
+        </p>
       </div>
 
-      <div style={{ display: 'flex', background: '#0F6E56' }}>
+      {/* TABS */}
+      <div style={{ display: 'flex', background: '#0F6E56', overflowX: 'auto' }}>
         {tabs.map(t => (
           <button
             key={t}
@@ -166,36 +184,59 @@ export default function Predicciones() {
         ))}
       </div>
 
+      {/* LISTA */}
       <div>
         {Object.entries(porFecha).map(([fecha, lista]) => (
           <div key={fecha}>
-            <h3>{fecha}</h3>
+            <h3 style={{ padding: '8px 12px' }}>{fecha}</h3>
 
-            {lista.map(p => (
-              <div key={p.id} style={{ border: '1px solid #ddd', margin: 10, padding: 12 }}>
-                
-                <p><strong>{p.equipo_local} vs {p.equipo_visitante}</strong></p>
-                <small>{getHora(p.fecha_hora)}</small>
+            {lista.map(p => {
+              const banderaLocal = getBandera(p.equipo_local);
+              const banderaVisitante = getBandera(p.equipo_visitante);
 
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <input
-                    type="number"
-                    value={predicciones[p.id]?.s1 || 0}
-                    onChange={e => onChange(p.id,'s1',e.target.value)}
-                  />
-                  <input
-                    type="number"
-                    value={predicciones[p.id]?.s2 || 0}
-                    onChange={e => onChange(p.id,'s2',e.target.value)}
-                  />
+              return (
+                <div key={p.id} style={{ border: '1px solid #ddd', margin: 10, padding: 12 }}>
+                  
+                  <p><strong>{p.equipo_local} vs {p.equipo_visitante}</strong></p>
+                  <small>{getHora(p.fecha_hora)}</small>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
+                    
+                    <div style={{ textAlign: 'center' }}>
+                      {!esPlaceholder(p.equipo_local) && banderaLocal ? (
+                        <img src={banderaLocal} alt="" style={{ width: 32 }} />
+                      ) : (
+                        <div style={{ width: 32, height: 22, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>?</div>
+                      )}
+                      <input
+                        type="number"
+                        value={predicciones[p.id]?.s1 || 0}
+                        onChange={e => onChange(p.id,'s1',e.target.value)}
+                      />
+                    </div>
+
+                    <div style={{ textAlign: 'center' }}>
+                      {!esPlaceholder(p.equipo_visitante) && banderaVisitante ? (
+                        <img src={banderaVisitante} alt="" style={{ width: 32 }} />
+                      ) : (
+                        <div style={{ width: 32, height: 22, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>?</div>
+                      )}
+                      <input
+                        type="number"
+                        value={predicciones[p.id]?.s2 || 0}
+                        onChange={e => onChange(p.id,'s2',e.target.value)}
+                      />
+                    </div>
+
+                  </div>
+
+                  <button onClick={() => guardar(p)}>
+                    {guardados[p.id] ? 'Guardado ✓' : 'Guardar'}
+                  </button>
+
                 </div>
-
-                <button onClick={() => guardar(p)}>
-                  {guardados[p.id] ? 'Guardado ✓' : 'Guardar'}
-                </button>
-
-              </div>
-            ))}
+              );
+            })}
           </div>
         ))}
       </div>
