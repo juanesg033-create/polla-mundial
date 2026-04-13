@@ -86,8 +86,8 @@ export default function Predicciones() {
         return 'abierto';
   };
 
-  const tabs = ['grupos', '16avos', 'octavos', ...
-        const tabLabel = { grupos: 'Grupos', '16avos': '16avos', octavos: ...
+  const tabs = ['grupos', '16avos', 'octavos',
+        const tabLabel = { grupos: 'Grupos', '16avos': '16avos', octavos:
         setPredicciones(prev => ({ ...prev, [id]: { ...prev[id], [team]: v } }));
         setGuardados(prev => ({ ...prev, [id]: false }));
  if (tab === '16avos') return p.fase === '16avos';
