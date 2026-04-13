@@ -6,7 +6,19 @@ const banderas = {
   'México': 'mx','Ecuador': 'ec','Estados Unidos': 'us','Cuba': 'cu',
   'Argentina': 'ar','Islandia': 'is','Marruecos': 'ma','Irak': 'iq',
   'España': 'es','Croacia': 'hr','Brasil': 'br','Alemania': 'de',
-  'Francia': 'fr','Colombia': 'co','Portugal': 'pt','Argelia': 'dz'
+  'Francia': 'fr','Colombia': 'co','Portugal': 'pt','Argelia': 'dz',
+  'Inglaterra': 'gb-eng','Senegal': 'sn','Países Bajos': 'nl',
+  'Arabia Saudita': 'sa','Uruguay': 'uy','Sudáfrica': 'za',
+  'Japón': 'jp','Australia': 'au','Italia': 'it','Chile': 'cl',
+  'Bélgica': 'be','Perú': 'pe','Canadá': 'ca','Suiza': 'ch',
+  'Corea del Sur': 'kr','Irán': 'ir','Ghana': 'gh','Camerún': 'cm',
+  'Escocia': 'gb-sct','Uzbekistán': 'uz','Qatar': 'qa',
+  'Rep. Checa': 'cz','Haití': 'ht','Bosnia y Herzegovina': 'ba',
+  'Turquía': 'tr','Curazao': 'cw','Costa de Marfil': 'ci',
+  'Túnez': 'tn','Suecia': 'se','Nueva Zelanda': 'nz',
+  'Cabo Verde': 'cv','Noruega': 'no','Austria': 'at',
+  'Jordania': 'jo','RD Congo': 'cd','Panamá': 'pa',
+  'Paraguay': 'py','Egipto': 'eg'
 };
 
 const getBandera = (pais) => {
@@ -17,14 +29,17 @@ const getBandera = (pais) => {
 const getFechaKey = (fecha) => {
   const d = new Date(fecha);
   return d.toLocaleDateString('es-CO', {
-    weekday: 'long', day: 'numeric', month: 'long'
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
   });
 };
 
 const getHora = (fecha) => {
   const d = new Date(fecha);
   return d.toLocaleTimeString('es-CO', {
-    hour: '2-digit', minute: '2-digit'
+    hour: '2-digit',
+    minute: '2-digit'
   });
 };
 
@@ -35,15 +50,31 @@ export default function Predicciones() {
   const [tab, setTab] = useState('grupos');
 
   const tabs = ['grupos','16avos','octavos','cuartos','semis','final'];
+  const tabLabel = {
+    grupos: 'Grupos',
+    '16avos': '16avos',
+    octavos: 'Octavos',
+    cuartos: 'Cuartos',
+    semis: 'Semis',
+    final: 'Final'
+  };
 
-  // ✅ evitar duplicados desde origen
   useEffect(() => {
     api.getPartidos().then(data => {
       if (!Array.isArray(data)) return;
 
+      // 🔥 eliminar duplicados por equipos + fecha
       const unicos = Array.from(
-        new Map(data.map(p => [p.id, p])).values()
+        new Map(
+          data.map(p => [
+            `${p.equipo_local}-${p.equipo_visitante}-${p.fecha_hora}`,
+            p
+          ])
+        ).values()
       );
+
+      console.log("CRUDOS:", data.length);
+      console.log("LIMPIOS:", unicos.length);
 
       setPartidos(unicos);
     });
@@ -82,17 +113,15 @@ export default function Predicciones() {
   };
 
   const partidosFiltrados = partidos.filter(p => {
-    if (tab === 'semis') return p.fase === 'semifinal';
+    if (tab === 'semis') return p.fase === 'semifinal' || p.fase === 'semis';
     return p.fase === tab;
   });
 
-  // ✅ agrupar sin duplicar
   const porFecha = partidosFiltrados.reduce((acc, p) => {
     const key = getFechaKey(p.fecha_hora);
 
     if (!acc[key]) acc[key] = [];
 
-    // evitar duplicado en grupo
     if (!acc[key].some(x => x.id === p.id)) {
       acc[key].push(p);
     }
@@ -110,57 +139,90 @@ export default function Predicciones() {
     }));
   };
 
+  const total = partidos.length;
+  const preditos = Object.values(guardados).filter(Boolean).length;
+  const pct = total > 0 ? Math.round((preditos / total) * 100) : 0;
+
   return (
     <div>
 
       {/* HEADER */}
-      <div style={{ background: '#1D9E75', padding: 12 }}>
-        <h1 style={{ color: '#fff', fontSize: 16 }}>
+      <div style={{ background: '#1D9E75', padding: '12px 16px' }}>
+        <h1 style={{ color: '#E1F5EE', fontSize: 15, margin: 0 }}>
           Mis predicciones
         </h1>
+        <p style={{ color: '#9FE1CB', fontSize: 12, margin: 0 }}>
+          Sector las Brisas · Mundial 2026
+        </p>
       </div>
 
       {/* TABS */}
-      <div style={{ display: 'flex' }}>
+      <div style={{ display: 'flex', background: '#0F6E56', overflowX: 'auto' }}>
         {tabs.map(t => (
-          <button key={t} onClick={() => setTab(t)}>
-            {t}
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            style={{
+              padding: '8px 12px',
+              color: tab === t ? '#fff' : '#9FE1CB',
+              background: 'none',
+              border: 'none',
+              borderBottom: tab === t ? '2px solid #fff' : 'none'
+            }}
+          >
+            {tabLabel[t]}
           </button>
         ))}
+      </div>
+
+      {/* PROGRESO */}
+      <div style={{ padding: 10 }}>
+        <small>{preditos} de {total} guardadas ({pct}%)</small>
       </div>
 
       {/* LISTA */}
       <div>
         {Object.entries(porFecha).map(([fecha, lista]) => (
           <div key={fecha}>
-            <h3>{fecha}</h3>
+            <h3 style={{ padding: '8px 12px' }}>{fecha}</h3>
 
-            {lista.map(p => (
-              <div key={p.id} style={{ border: '1px solid #ddd', margin: 8, padding: 10 }}>
-                
-                <p>{p.equipo_local} vs {p.equipo_visitante}</p>
-                <small>{getHora(p.fecha_hora)}</small>
+            {lista.map(p => {
+              const banderaLocal = getBandera(p.equipo_local);
+              const banderaVisitante = getBandera(p.equipo_visitante);
 
-                <div>
-                  <input
-                    type="number"
-                    value={predicciones[p.id]?.s1 || 0}
-                    onChange={e => onChange(p.id,'s1',e.target.value)}
-                  />
+              return (
+                <div key={p.id} style={{ border: '1px solid #ddd', margin: 10, padding: 12 }}>
+                  
+                  <p><strong>{p.equipo_local} vs {p.equipo_visitante}</strong></p>
+                  <small>{getHora(p.fecha_hora)}</small>
 
-                  <input
-                    type="number"
-                    value={predicciones[p.id]?.s2 || 0}
-                    onChange={e => onChange(p.id,'s2',e.target.value)}
-                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
+                    <div>
+                      {banderaLocal && <img src={banderaLocal} alt="" />}
+                      <input
+                        type="number"
+                        value={predicciones[p.id]?.s1 || 0}
+                        onChange={e => onChange(p.id,'s1',e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      {banderaVisitante && <img src={banderaVisitante} alt="" />}
+                      <input
+                        type="number"
+                        value={predicciones[p.id]?.s2 || 0}
+                        onChange={e => onChange(p.id,'s2',e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <button onClick={() => guardar(p)}>
+                    {guardados[p.id] ? 'Guardado ✓' : 'Guardar'}
+                  </button>
+
                 </div>
-
-                <button onClick={() => guardar(p)}>
-                  {guardados[p.id] ? 'Guardado' : 'Guardar'}
-                </button>
-
-              </div>
-            ))}
+              );
+            })}
           </div>
         ))}
       </div>
