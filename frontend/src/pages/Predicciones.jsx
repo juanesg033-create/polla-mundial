@@ -49,21 +49,13 @@ export default function Predicciones() {
   const [guardados, setGuardados] = useState({});
   const [tab, setTab] = useState('grupos');
 
-  const tabs = ['grupos','16avos','octavos','cuartos','semis','final'];
-  const tabLabel = {
-    grupos: 'Grupos',
-    '16avos': '16avos',
-    octavos: 'Octavos',
-    cuartos: 'Cuartos',
-    semis: 'Semis',
-    final: 'Final'
-  };
+  const tabsBase = ['grupos','16avos','octavos','cuartos','semis','final'];
 
+  // 🔥 Cargar datos sin duplicados
   useEffect(() => {
     api.getPartidos().then(data => {
       if (!Array.isArray(data)) return;
 
-      // 🔥 eliminar duplicados por equipos + fecha
       const unicos = Array.from(
         new Map(
           data.map(p => [
@@ -72,9 +64,6 @@ export default function Predicciones() {
           ])
         ).values()
       );
-
-      console.log("CRUDOS:", data.length);
-      console.log("LIMPIOS:", unicos.length);
 
       setPartidos(unicos);
     });
@@ -97,6 +86,10 @@ export default function Predicciones() {
       setGuardados(gmap);
     });
   }, []);
+
+  // 🔥 Tabs dinámicas (solo muestra fases con datos)
+  const fasesDisponibles = [...new Set(partidos.map(p => p.fase))];
+  const tabs = tabsBase.filter(f => fasesDisponibles.includes(f));
 
   const onChange = (id, team, value) => {
     const v = parseInt(value) || 0;
@@ -170,7 +163,7 @@ export default function Predicciones() {
               borderBottom: tab === t ? '2px solid #fff' : 'none'
             }}
           >
-            {tabLabel[t]}
+            {t}
           </button>
         ))}
       </div>
@@ -182,6 +175,12 @@ export default function Predicciones() {
 
       {/* LISTA */}
       <div>
+        {partidosFiltrados.length === 0 && (
+          <p style={{ textAlign: 'center', color: '#999', padding: 20 }}>
+            Esta fase aún no tiene partidos disponibles
+          </p>
+        )}
+
         {Object.entries(porFecha).map(([fecha, lista]) => (
           <div key={fecha}>
             <h3 style={{ padding: '8px 12px' }}>{fecha}</h3>
