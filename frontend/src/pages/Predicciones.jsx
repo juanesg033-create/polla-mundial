@@ -86,11 +86,11 @@ export default function Predicciones() {
         return 'abierto';
   };
 
-  const onChange = (id, team, val) => {
-        const v = Math.max(0, Math.min(99, parseInt(val) || 0));
+  const tabs = ['grupos', '16avos', 'octavos', ...
+        const tabLabel = { grupos: 'Grupos', '16avos': '16avos', octavos: ...
         setPredicciones(prev => ({ ...prev, [id]: { ...prev[id], [team]: v } }));
         setGuardados(prev => ({ ...prev, [id]: false }));
-  };
+ if (tab === '16avos') return p.fase === '16avos';
 
   const guardar = async (p) => {
         const pred = predicciones[p.id] || { s1: 0, s2: 0 };
