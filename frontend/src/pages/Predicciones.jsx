@@ -49,13 +49,14 @@ export default function Predicciones() {
   const [guardados, setGuardados] = useState({});
   const [tab, setTab] = useState('grupos');
 
-  const tabsBase = ['grupos','16avos','octavos','cuartos','semis','final'];
+  // 🔥 SIEMPRE visibles
+  const tabs = ['grupos','16avos','octavos','cuartos','semis','final'];
 
-  // 🔥 Cargar datos sin duplicados
   useEffect(() => {
     api.getPartidos().then(data => {
       if (!Array.isArray(data)) return;
 
+      // eliminar duplicados
       const unicos = Array.from(
         new Map(
           data.map(p => [
@@ -86,10 +87,6 @@ export default function Predicciones() {
       setGuardados(gmap);
     });
   }, []);
-
-  // 🔥 Tabs dinámicas (solo muestra fases con datos)
-  const fasesDisponibles = [...new Set(partidos.map(p => p.fase))];
-  const tabs = tabsBase.filter(f => fasesDisponibles.includes(f));
 
   const onChange = (id, team, value) => {
     const v = parseInt(value) || 0;
@@ -175,6 +172,7 @@ export default function Predicciones() {
 
       {/* LISTA */}
       <div>
+
         {partidosFiltrados.length === 0 && (
           <p style={{ textAlign: 'center', color: '#999', padding: 20 }}>
             Esta fase aún no tiene partidos disponibles
@@ -224,6 +222,7 @@ export default function Predicciones() {
             })}
           </div>
         ))}
+
       </div>
 
       <NavBottom />
