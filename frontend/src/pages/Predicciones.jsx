@@ -1,121 +1,74 @@
 import { useEffect, useState } from 'react';
-import { api } from '../services/api';
 import NavBottom from '../components/NavBottom';
 
+const partidosMock = [
+  {
+    id: 1,
+    equipo_local: 'México',
+    equipo_visitante: 'Estados Unidos',
+    fecha_hora: '2026-06-11T19:00:00',
+    cierre_prediccion: '2026-06-11T18:30:00',
+    fase: 'grupos',
+    grupo: 'A',
+    finalizado: false
+  },
+  {
+    id: 2,
+    equipo_local: 'Colombia',
+    equipo_visitante: 'Japón',
+    fecha_hora: '2026-06-12T16:00:00',
+    cierre_prediccion: '2026-06-12T15:30:00',
+    fase: 'grupos',
+    grupo: 'B',
+    finalizado: false
+  },
+  {
+    id: 3,
+    equipo_local: 'Brasil',
+    equipo_visitante: 'Alemania',
+    fecha_hora: '2026-06-13T20:00:00',
+    cierre_prediccion: '2026-06-13T19:30:00',
+    fase: 'grupos',
+    grupo: 'C',
+    finalizado: false
+  },
+  {
+    id: 4,
+    equipo_local: 'Argentina',
+    equipo_visitante: 'España',
+    fecha_hora: '2026-06-14T18:00:00',
+    cierre_prediccion: '2026-06-14T17:30:00',
+    fase: 'grupos',
+    grupo: 'D',
+    finalizado: false
+  },
+  {
+    id: 5,
+    equipo_local: 'Francia',
+    equipo_visitante: 'Italia',
+    fecha_hora: '2026-06-15T21:00:00',
+    cierre_prediccion: '2026-06-15T20:30:00',
+    fase: 'grupos',
+    grupo: 'E',
+    finalizado: false
+  }
+];
+
 const banderas = {
-  'México': 'mx','Ecuador': 'ec','Estados Unidos': 'us','Cuba': 'cu',
-  'Argentina': 'ar','Islandia': 'is','Marruecos': 'ma','Irak': 'iq',
-  'España': 'es','Croacia': 'hr','Brasil': 'br','Alemania': 'de',
-  'Francia': 'fr','Colombia': 'co','Portugal': 'pt','Argelia': 'dz',
-  'Inglaterra': 'gb-eng','Senegal': 'sn','Países Bajos': 'nl',
-  'Arabia Saudita': 'sa','Uruguay': 'uy','Sudáfrica': 'za',
-  'Japón': 'jp','Australia': 'au','Italia': 'it','Chile': 'cl',
-  'Bélgica': 'be','Perú': 'pe','Canadá': 'ca','Suiza': 'ch',
-  'Corea del Sur': 'kr','Irán': 'ir','Ghana': 'gh','Camerún': 'cm',
-  'Escocia': 'gb-sct','Uzbekistán': 'uz','Qatar': 'qa',
-  'Rep. Checa': 'cz','Haití': 'ht','Bosnia y Herzegovina': 'ba',
-  'Turquía': 'tr','Curazao': 'cw','Costa de Marfil': 'ci',
-  'Túnez': 'tn','Suecia': 'se','Nueva Zelanda': 'nz',
-  'Cabo Verde': 'cv','Noruega': 'no','Austria': 'at',
-  'Jordania': 'jo','RD Congo': 'cd','Panamá': 'pa',
-  'Paraguay': 'py','Egipto': 'eg'
+  'México': 'mx','Estados Unidos': 'us','Colombia': 'co','Japón': 'jp',
+  'Brasil': 'br','Alemania': 'de','Argentina': 'ar','España': 'es',
+  'Francia': 'fr','Italia': 'it'
 };
 
-const getBandera = (pais) => {
-  const codigo = banderas[pais];
-  return codigo ? `https://flagcdn.com/w40/${codigo}.png` : null;
-};
-
-const esPlaceholder = (nombre) => {
-  return /\d[A-Z]/.test(nombre) || nombre.includes('Mejor');
-};
-
-const getFechaKey = (fecha) => {
-  const d = new Date(fecha);
-  return d.toLocaleDateString('es-CO', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long'
-  });
-};
-
-const getHora = (fecha) => {
-  const d = new Date(fecha);
-  return d.toLocaleTimeString('es-CO', {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
+const getBandera = (pais) =>
+  banderas[pais] ? `https://flagcdn.com/w40/${banderas[pais]}.png` : null;
 
 export default function Predicciones() {
   const [partidos, setPartidos] = useState([]);
   const [predicciones, setPredicciones] = useState({});
-  const [guardados, setGuardados] = useState({});
-  const [tab, setTab] = useState('grupos');
-
-  const tabs = ['grupos','16avos','octavos','cuartos','semis','final'];
 
   useEffect(() => {
-    api.getPartidos().then(data => {
-      if (!Array.isArray(data)) return;
-
-      let unicos = Array.from(
-        new Map(
-          data.map(p => [
-            `${p.equipo_local}-${p.equipo_visitante}-${p.fecha_hora}`,
-            p
-          ])
-        ).values()
-      );
-
-      // 🔥 Generar 16avos si no existen (estructura realista)
-      const hay16avos = unicos.some(p => p.fase === '16avos');
-
-      if (!hay16avos) {
-        const hoy = new Date();
-
-        const mock16avos = [
-          ['1A','Mejor 3°'],
-          ['2B','2F'],
-          ['1C','Mejor 3°'],
-          ['2A','2D'],
-          ['1B','Mejor 3°'],
-          ['2C','2E'],
-          ['1D','Mejor 3°'],
-          ['2A','Mejor 3°']
-        ].map((c, i) => ({
-          id: 9000 + i,
-          equipo_local: c[0],
-          equipo_visitante: c[1],
-          fecha_hora: hoy.toISOString(),
-          cierre_prediccion: hoy.toISOString(),
-          fase: '16avos',
-          finalizado: false
-        }));
-
-        unicos = [...unicos, ...mock16avos];
-      }
-
-      setPartidos(unicos);
-    });
-
-    api.misPredicciones().then(d => {
-      if (!Array.isArray(d)) return;
-
-      const mapa = {};
-      const gmap = {};
-
-      d.forEach(p => {
-        mapa[p.partido_id] = {
-          s1: p.goles_local,
-          s2: p.goles_visitante
-        };
-        gmap[p.partido_id] = true;
-      });
-
-      setPredicciones(mapa);
-      setGuardados(gmap);
-    });
+    setPartidos(partidosMock);
   }, []);
 
   const onChange = (id, team, value) => {
@@ -125,125 +78,37 @@ export default function Predicciones() {
       ...prev,
       [id]: { ...prev[id], [team]: v }
     }));
-
-    setGuardados(prev => ({
-      ...prev,
-      [id]: false
-    }));
-  };
-
-  const partidosFiltrados = partidos.filter(p => {
-    if (tab === 'semis') return p.fase === 'semifinal' || p.fase === 'semis';
-    return p.fase === tab;
-  });
-
-  const porFecha = partidosFiltrados.reduce((acc, p) => {
-    const key = getFechaKey(p.fecha_hora);
-
-    if (!acc[key]) acc[key] = [];
-    if (!acc[key].some(x => x.id === p.id)) acc[key].push(p);
-
-    return acc;
-  }, {});
-
-  const guardar = async (p) => {
-    const pred = predicciones[p.id] || { s1: 0, s2: 0 };
-    await api.guardarPrediccion(p.id, pred.s1, pred.s2);
-
-    setGuardados(prev => ({
-      ...prev,
-      [p.id]: true
-    }));
   };
 
   return (
     <div>
 
-      {/* HEADER */}
-      <div style={{ background: '#1D9E75', padding: '12px 16px' }}>
-        <h1 style={{ color: '#E1F5EE', fontSize: 15, margin: 0 }}>
-          Mis predicciones
-        </h1>
-        <p style={{ color: '#9FE1CB', fontSize: 12, margin: 0 }}>
-          Sector las Brisas · Mundial 2026
-        </p>
+      <div style={{ background: '#1D9E75', padding: 12 }}>
+        <h2 style={{ color: '#fff' }}>Prueba Mundial 2026</h2>
       </div>
 
-      {/* TABS */}
-      <div style={{ display: 'flex', background: '#0F6E56', overflowX: 'auto' }}>
-        {tabs.map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            style={{
-              padding: '8px 12px',
-              color: tab === t ? '#fff' : '#9FE1CB',
-              background: 'none',
-              border: 'none',
-              borderBottom: tab === t ? '2px solid #fff' : 'none'
-            }}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
+      {partidos.map(p => (
+        <div key={p.id} style={{ border: '1px solid #ccc', margin: 10, padding: 10 }}>
+          
+          <p><strong>{p.equipo_local} vs {p.equipo_visitante}</strong></p>
+          <small>{new Date(p.fecha_hora).toLocaleString()}</small>
 
-      {/* LISTA */}
-      <div>
-        {Object.entries(porFecha).map(([fecha, lista]) => (
-          <div key={fecha}>
-            <h3 style={{ padding: '8px 12px' }}>{fecha}</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
+            
+            <div style={{ textAlign: 'center' }}>
+              <img src={getBandera(p.equipo_local)} alt="" />
+              <input type="number" onChange={e => onChange(p.id,'s1',e.target.value)} />
+            </div>
 
-            {lista.map(p => {
-              const banderaLocal = getBandera(p.equipo_local);
-              const banderaVisitante = getBandera(p.equipo_visitante);
+            <div style={{ textAlign: 'center' }}>
+              <img src={getBandera(p.equipo_visitante)} alt="" />
+              <input type="number" onChange={e => onChange(p.id,'s2',e.target.value)} />
+            </div>
 
-              return (
-                <div key={p.id} style={{ border: '1px solid #ddd', margin: 10, padding: 12 }}>
-                  
-                  <p><strong>{p.equipo_local} vs {p.equipo_visitante}</strong></p>
-                  <small>{getHora(p.fecha_hora)}</small>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
-                    
-                    <div style={{ textAlign: 'center' }}>
-                      {!esPlaceholder(p.equipo_local) && banderaLocal ? (
-                        <img src={banderaLocal} alt="" style={{ width: 32 }} />
-                      ) : (
-                        <div style={{ width: 32, height: 22, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>?</div>
-                      )}
-                      <input
-                        type="number"
-                        value={predicciones[p.id]?.s1 || 0}
-                        onChange={e => onChange(p.id,'s1',e.target.value)}
-                      />
-                    </div>
-
-                    <div style={{ textAlign: 'center' }}>
-                      {!esPlaceholder(p.equipo_visitante) && banderaVisitante ? (
-                        <img src={banderaVisitante} alt="" style={{ width: 32 }} />
-                      ) : (
-                        <div style={{ width: 32, height: 22, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>?</div>
-                      )}
-                      <input
-                        type="number"
-                        value={predicciones[p.id]?.s2 || 0}
-                        onChange={e => onChange(p.id,'s2',e.target.value)}
-                      />
-                    </div>
-
-                  </div>
-
-                  <button onClick={() => guardar(p)}>
-                    {guardados[p.id] ? 'Guardado ✓' : 'Guardar'}
-                  </button>
-
-                </div>
-              );
-            })}
           </div>
-        ))}
-      </div>
+
+        </div>
+      ))}
 
       <NavBottom />
     </div>
