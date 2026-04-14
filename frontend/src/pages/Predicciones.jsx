@@ -1,6 +1,6 @@
 const generarGrupos = () => {
-  let id = 1;
   const partidos = [];
+  let id = 1;
 
   const grupos = {
     A: ['México','Sudáfrica','Corea del Sur','Chequia'],
@@ -17,39 +17,42 @@ const generarGrupos = () => {
     L: ['Países Bajos','Panamá','Costa Rica','Qatar B']
   };
 
-  const horarios = ['11:00', '14:00'];
+  // 3 jornadas reales
+  const jornadas = [
+    [[0,1],[2,3]],
+    [[0,2],[1,3]],
+    [[0,3],[1,2]]
+  ];
 
-  let fechaBase = new Date('2026-06-11T11:00:00');
-  let diaOffset = 0;
+  const horas = ['11:00','14:00'];
 
-  Object.entries(grupos).forEach(([grupo, equipos]) => {
+  let fecha = new Date('2026-06-11T00:00:00');
 
-    const jornadas = [
-      [[equipos[0], equipos[1]], [equipos[2], equipos[3]]],
-      [[equipos[0], equipos[2]], [equipos[1], equipos[3]]],
-      [[equipos[0], equipos[3]], [equipos[1], equipos[2]]]
-    ];
+  Object.entries(grupos).forEach(([grupo, equipos], gIndex) => {
 
-    jornadas.forEach((jornada) => {
+    jornadas.forEach((jornada, jIndex) => {
 
-      jornada.forEach((partido, i) => {
-        const f = new Date(fechaBase);
-        f.setDate(fechaBase.getDate() + diaOffset);
+      // 👉 cada grupo empieza en días distintos
+      const fechaJornada = new Date(fecha);
+      fechaJornada.setDate(fecha.getDate() + (gIndex * 3) + jIndex);
 
-        const [h, m] = horarios[i].split(':');
+      jornada.forEach((match, i) => {
+
+        const f = new Date(fechaJornada);
+        const [h, m] = horas[i].split(':');
         f.setHours(h, m);
 
         partidos.push({
           id: id++,
-          equipo_local: partido[0],
-          equipo_visitante: partido[1],
+          equipo_local: equipos[match[0]],
+          equipo_visitante: equipos[match[1]],
           fecha_hora: f.toISOString(),
           fase: 'grupos',
           grupo
         });
+
       });
 
-      diaOffset++; // siguiente día para la siguiente jornada
     });
 
   });
