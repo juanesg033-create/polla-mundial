@@ -130,67 +130,50 @@ const formatHora = (f) =>
   new Date(f).toLocaleTimeString('es-CO', { hour:'2-digit', minute:'2-digit' });
 
 export default function Predicciones() {
-  const [partidosDB, setPartidosDB] = useState([]);
-  // predicciones usa el id LOCAL (1-72) como clave para poder editar antes de que cargue la DB
+  const [partidosDB, setPartidosDB]   = useState([]);
+  const [dbCargada, setDbCargada]     = useState(false);
   const [predicciones, setPredicciones] = useState({});
-  const [guardados, setGuardados] = useState({});
-  const [guardando, setGuardando] = useState({});
-  const [tab, setTab] = useState('grupos');
+  const [guardados, setGuardados]     = useState({});
+  const [guardando, setGuardando]     = useState({});
+  const [tab, setTab]                 = useState('grupos');
 
   const tabs = ['grupos','16avos','octavos','cuartos','semis','final'];
   const tabLabel = { grupos:'Grupos','16avos':'16avos',octavos:'Octavos',cuartos:'Cuartos',semis:'Semis',final:'Final' };
 
+  // 1. Cargar partidos de la DB
   useEffect(() => {
-    // Cargar partidos reales de la DB para obtener sus UUIDs
     api.getPartidos().then(data => {
-      if (Array.isArray(data)) setPartidosDB(data);
-    });
-
-    // Cargar predicciones previas
-    api.misPredicciones().then(data => {
       if (Array.isArray(data)) {
-        const predMap = {};
-        const guardMap = {};
-        data.forEach(p => {
-          // Buscar el partido local que corresponde a este UUID
-          const local = todosPartidos.find(lp => {
-            // Buscar por nombre en la DB cuando la tengamos
-            return false; // Se resuelve después de cargar la DB
-          });
-          // Guardar temporalmente por partido_id (UUID)
-          predMap[`uuid_${p.partido_id}`] = { s1: p.goles_local, s2: p.goles_visitante };
-          guardMap[`uuid_${p.partido_id}`] = true;
-        });
-        setPredicciones(prev => ({ ...prev, ...predMap }));
-        setGuardados(prev => ({ ...prev, ...guardMap }));
+        setPartidosDB(data);
+        setDbCargada(true);
       }
     });
   }, []);
 
-  // Cuando carga la DB, cruzar predicciones previas con IDs locales
+  // 2. Cuando la DB cargue, cruzar predicciones previas con IDs locales
   useEffect(() => {
-    if (partidosDB.length === 0) return;
+    if (!dbCargada || partidosDB.length === 0) return;
     api.misPredicciones().then(data => {
       if (!Array.isArray(data)) return;
       const predMap = {};
       const guardMap = {};
       data.forEach(p => {
-        const dbPartido = partidosDB.find(db => db.id === p.partido_id);
-        if (!dbPartido) return;
-        const localPartido = todosPartidos.find(
-          lp => lp.equipo_local === dbPartido.equipo_local &&
-                lp.equipo_visitante === dbPartido.equipo_visitante
+        const dbP = partidosDB.find(db => db.id === p.partido_id);
+        if (!dbP) return;
+        const local = todosPartidos.find(
+          lp => lp.equipo_local === dbP.equipo_local &&
+                lp.equipo_visitante === dbP.equipo_visitante
         );
-        if (!localPartido) return;
-        predMap[localPartido.id] = { s1: p.goles_local, s2: p.goles_visitante };
-        guardMap[localPartido.id] = true;
+        if (!local) return;
+        predMap[local.id]  = { s1: p.goles_local, s2: p.goles_visitante };
+        guardMap[local.id] = true;
       });
-      setPredicciones(prev => ({ ...prev, ...predMap }));
-      setGuardados(prev => ({ ...prev, ...guardMap }));
+      setPredicciones(predMap);
+      setGuardados(guardMap);
     });
-  }, [partidosDB]);
+  }, [dbCargada]);
 
-  // onChange usa el id LOCAL — siempre funciona
+  // onChange usa id LOCAL — siempre funciona independiente de la DB
   const onChange = (localId, team, value) => {
     const v = Math.max(0, Math.min(99, parseInt(value) || 0));
     setPredicciones(prev => ({ ...prev, [localId]: { ...prev[localId], [team]: v } }));
@@ -198,18 +181,14 @@ export default function Predicciones() {
   };
 
   const guardar = async (p) => {
-    // Buscar UUID real en la DB por nombre
-    const dbPartido = partidosDB.find(
+    const dbP = partidosDB.find(
       db => db.equipo_local.trim() === p.equipo_local.trim() &&
             db.equipo_visitante.trim() === p.equipo_visitante.trim()
     );
-    if (!dbPartido) {
-      alert(`Partido no encontrado en el servidor. Intenta de nuevo en unos segundos.`);
-      return;
-    }
+    if (!dbP) { alert('Partido no encontrado. Intenta de nuevo.'); return; }
     const pred = predicciones[p.id] || { s1: 0, s2: 0 };
     setGuardando(prev => ({ ...prev, [p.id]: true }));
-    const res = await api.guardarPrediccion(dbPartido.id, pred.s1, pred.s2);
+    const res = await api.guardarPrediccion(dbP.id, pred.s1, pred.s2);
     setGuardando(prev => ({ ...prev, [p.id]: false }));
     if (res.error) { alert('Error: ' + res.error); return; }
     setGuardados(prev => ({ ...prev, [p.id]: true }));
@@ -261,11 +240,11 @@ export default function Predicciones() {
 
             {lista.map(p => {
               const esPorDefinir = p.equipo_local === 'Por definir';
-              const pred = predicciones[p.id] || { s1: 0, s2: 0 };
-              const yaGuardado = !!guardados[p.id];
-              const cargando = !!guardando[p.id];
-              const bl = getBandera(p.equipo_local);
-              const bv = getBandera(p.equipo_visitante);
+              const pred        = predicciones[p.id] || { s1: 0, s2: 0 };
+              const yaGuardado  = !!guardados[p.id];
+              const cargando    = !!guardando[p.id];
+              const bl          = getBandera(p.equipo_local);
+              const bv          = getBandera(p.equipo_visitante);
 
               return (
                 <div key={p.id} style={{
@@ -274,8 +253,16 @@ export default function Predicciones() {
                 }}>
                   <div style={{ display:'flex', justifyContent:'space-between', marginBottom:10 }}>
                     <span style={{ fontSize:11, color:'#7dcfaa' }}>{p.grupo} · {formatHora(p.fecha_hora)}</span>
-                    {esPorDefinir && <span style={{ fontSize:10, background:'#1a4060', color:'#7dcfaa', padding:'2px 8px', borderRadius:10 }}>Por definir</span>}
-                    {yaGuardado && !esPorDefinir && <span style={{ fontSize:10, background:'#0e3d2a', color:'#3ddc97', padding:'2px 8px', borderRadius:10 }}>✓ Guardado</span>}
+                    {esPorDefinir && (
+                      <span style={{ fontSize:10, background:'#1a4060', color:'#7dcfaa', padding:'2px 8px', borderRadius:10 }}>
+                        Por definir
+                      </span>
+                    )}
+                    {yaGuardado && !esPorDefinir && (
+                      <span style={{ fontSize:10, background:'#0e3d2a', color:'#3ddc97', padding:'2px 8px', borderRadius:10 }}>
+                        ✓ Guardado
+                      </span>
+                    )}
                   </div>
 
                   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
@@ -284,8 +271,7 @@ export default function Predicciones() {
                       <span style={{ fontSize:12, fontWeight:600 }}>{p.equipo_local}</span>
                     </div>
                     <div style={{ display:'flex', alignItems:'center', gap:6, padding:'0 10px' }}>
-                      <input
-                        type="number" min="0" max="99"
+                      <input type="number" min="0" max="99"
                         value={pred.s1}
                         disabled={esPorDefinir}
                         onChange={e => onChange(p.id, 's1', e.target.value)}
@@ -298,8 +284,7 @@ export default function Predicciones() {
                         }}
                       />
                       <span style={{ color:'#555', fontWeight:700 }}>—</span>
-                      <input
-                        type="number" min="0" max="99"
+                      <input type="number" min="0" max="99"
                         value={pred.s2}
                         disabled={esPorDefinir}
                         onChange={e => onChange(p.id, 's2', e.target.value)}
@@ -321,17 +306,18 @@ export default function Predicciones() {
                   {!esPorDefinir && (
                     <button
                       onClick={() => guardar(p)}
-                      disabled={cargando}
+                      disabled={cargando || !dbCargada}
                       style={{
                         width:'100%', marginTop:10, padding:'10px',
                         background: yaGuardado ? '#0e3d2a' : '#1a7a55',
                         color: yaGuardado ? '#3ddc97' : '#fff',
                         fontWeight:600, fontSize:12,
                         border: yaGuardado ? '1px solid #3ddc97' : 'none',
-                        borderRadius:8, cursor: cargando ? 'wait' : 'pointer',
-                        opacity: cargando ? 0.6 : 1,
+                        borderRadius:8,
+                        cursor: (cargando || !dbCargada) ? 'not-allowed' : 'pointer',
+                        opacity: (cargando || !dbCargada) ? 0.6 : 1,
                       }}>
-                      {cargando ? 'Guardando...' : yaGuardado ? '✓ Guardado' : 'Guardar predicción'}
+                      {!dbCargada ? 'Cargando...' : cargando ? 'Guardando...' : yaGuardado ? '✓ Guardado' : 'Guardar predicción'}
                     </button>
                   )}
                 </div>
