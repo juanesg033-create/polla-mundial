@@ -11,27 +11,21 @@ const iniciarScheduler = require('./src/scheduler');
 const app = express();
 
 app.use(cors({
-  origin: ['https://polla-mundial-production.up.railway.app', 'http://localhost:5173'],
-  credentials: true
+    origin: ['https://polla-mundial-production.up.railway.app', 'http://localhost:5173'],
+    credentials: true
 }));
 
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api', apiRoutes);
-app.get('/', (req, res) => res.json({ mensaje: 'API Polla Mundial - Sector las Brisas 🏆' }));
+app.get('/', (req, res) => res.json({ mensaje: 'API Polla Mundial - Sector las Brisas' }));
 
-const iniciar = async () => {
-  try {
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, async () => {
+    console.log(`Servidor corriendo en puerto ${PORT}`);
     await crearTablas();
     await crearAdmin();
-    await cargarPartidos();
-    iniciarScheduler();
-    app.listen(process.env.PORT || 3000, () => {
-      console.log(`Servidor corriendo en http://localhost:${process.env.PORT || 3000}`);
-    });
-  } catch (err) {
-    console.error('Error al iniciar:', err.message);
-  }
-};
-
-iniciar();
+    // cargarPartidos(); // desactivado - partidos ya cargados en DB
+             iniciarScheduler();
+});
