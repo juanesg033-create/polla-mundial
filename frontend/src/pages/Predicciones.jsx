@@ -1,157 +1,195 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import NavBottom from '../components/NavBottom';
 
-// 🟢 BANDERAS
+// 🔵 PARTIDOS REALES
+const partidosReales = [
+  { id: 1, equipo_local: 'México', equipo_visitante: 'Sudáfrica', fecha_hora: '2026-06-11T14:00:00', fase: 'grupos' },
+  { id: 2, equipo_local: 'Corea del Sur', equipo_visitante: 'Chequia', fecha_hora: '2026-06-11T21:00:00', fase: 'grupos' },
+  { id: 3, equipo_local: 'Canadá', equipo_visitante: 'Bosnia y Herzegovina', fecha_hora: '2026-06-12T14:00:00', fase: 'grupos' },
+  { id: 4, equipo_local: 'Estados Unidos', equipo_visitante: 'Paraguay', fecha_hora: '2026-06-12T20:00:00', fase: 'grupos' },
+  { id: 5, equipo_local: 'Catar', equipo_visitante: 'Suiza', fecha_hora: '2026-06-13T14:00:00', fase: 'grupos' },
+  { id: 6, equipo_local: 'Brasil', equipo_visitante: 'Marruecos', fecha_hora: '2026-06-13T17:00:00', fase: 'grupos' }
+];
+
+// 🔴 GENERAR FASES
+const generarFases = () => {
+  let id = 1000;
+  const hoy = new Date().toISOString();
+
+  const crear = (fase, cantidad) =>
+    Array.from({ length: cantidad }, () => ({
+      id: id++,
+      equipo_local: 'Por definir',
+      equipo_visitante: 'Por definir',
+      fecha_hora: hoy,
+      fase
+    }));
+
+  return [
+    ...crear('16avos', 16),
+    ...crear('octavos', 8),
+    ...crear('cuartos', 4),
+    ...crear('semis', 2),
+    ...crear('final', 1)
+  ];
+};
+
+// 🏳️ BANDERAS
 const banderas = {
-  'México':'mx','Sudáfrica':'za','Corea del Sur':'kr','Chequia':'cz',
-  'Canadá':'ca','Bosnia':'ba','Catar':'qa','Suiza':'ch',
-  'Brasil':'br','Marruecos':'ma','Japón':'jp','Escocia':'gb',
-  'EEUU':'us','Paraguay':'py','Australia':'au','Turquía':'tr',
-  'Alemania':'de','Ecuador':'ec','Nigeria':'ng','Polonia':'pl',
-  'Francia':'fr','Chile':'cl','Dinamarca':'dk','Irán':'ir',
-  'Argentina':'ar','Perú':'pe','Serbia':'rs','Corea Norte':'kp',
-  'España':'es','Colombia':'co','Egipto':'eg','Suecia':'se',
-  'Inglaterra':'gb','Uruguay':'uy','Ghana':'gh','Canadá B':'ca',
-  'Portugal':'pt','Bolivia':'bo','Croacia':'hr','Japón B':'jp',
-  'Italia':'it','Venezuela':'ve','Senegal':'sn','Australia B':'au',
-  'Países Bajos':'nl','Panamá':'pa','Costa Rica':'cr','Qatar B':'qa'
+  'México': 'mx','Sudáfrica': 'za','Corea del Sur': 'kr','Chequia': 'cz',
+  'Canadá': 'ca','Bosnia y Herzegovina': 'ba','Estados Unidos': 'us','Paraguay': 'py',
+  'Catar': 'qa','Suiza': 'ch','Brasil': 'br','Marruecos': 'ma'
 };
 
 const getBandera = (pais) =>
-  banderas[pais]
-    ? `https://flagcdn.com/w40/${banderas[pais]}.png`
-    : null;
+  banderas[pais] ? `https://flagcdn.com/w40/${banderas[pais]}.png` : null;
 
-// 🟢 FUNCIÓN PARA CREAR GRUPO (MISMA ESTRUCTURA DEL EXCEL)
-const crearGrupo = (grupo, equipos, startId, startDate) => {
-  const partidos = [];
-  let id = startId;
-
-  const jornadas = [
-    [[0,1],[2,3]],
-    [[0,2],[1,3]],
-    [[0,3],[1,2]]
-  ];
-
-  let fecha = new Date(startDate);
-
-  jornadas.forEach(jornada => {
-    jornada.forEach((p, i) => {
-      const f = new Date(fecha);
-      f.setHours(i === 0 ? 11 : 14);
-
-      partidos.push({
-        id: id++,
-        fase: 'grupos',
-        grupo,
-        equipo_local: equipos[p[0]],
-        equipo_visitante: equipos[p[1]],
-        fecha_hora: f.toISOString()
-      });
-    });
-    fecha.setDate(fecha.getDate() + 1);
+// 📅 FORMATEO
+const formatFechaTitulo = (fechaISO) => {
+  const f = new Date(fechaISO);
+  return f.toLocaleDateString('es-CO', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
   });
-
-  return partidos;
 };
 
-// 🟢 TODOS LOS GRUPOS (DEL EXCEL)
-const partidosIniciales = [
-  ...crearGrupo('A',['México','Sudáfrica','Corea del Sur','Chequia'],1,'2026-06-11'),
-  ...crearGrupo('B',['Canadá','Bosnia','Catar','Suiza'],7,'2026-06-14'),
-  ...crearGrupo('C',['Brasil','Marruecos','Japón','Escocia'],13,'2026-06-17'),
-  ...crearGrupo('D',['EEUU','Paraguay','Australia','Turquía'],19,'2026-06-20'),
-  ...crearGrupo('E',['Alemania','Ecuador','Nigeria','Polonia'],25,'2026-06-23'),
-  ...crearGrupo('F',['Francia','Chile','Dinamarca','Irán'],31,'2026-06-26'),
-  ...crearGrupo('G',['Argentina','Perú','Serbia','Corea Norte'],37,'2026-06-29'),
-  ...crearGrupo('H',['España','Colombia','Egipto','Suecia'],43,'2026-07-02'),
-  ...crearGrupo('I',['Inglaterra','Uruguay','Ghana','Canadá B'],49,'2026-07-05'),
-  ...crearGrupo('J',['Portugal','Bolivia','Croacia','Japón B'],55,'2026-07-08'),
-  ...crearGrupo('K',['Italia','Venezuela','Senegal','Australia B'],61,'2026-07-11'),
-  ...crearGrupo('L',['Países Bajos','Panamá','Costa Rica','Qatar B'],67,'2026-07-14'),
-
-  // ELIMINATORIAS
-  { id:100,fase:'16avos',equipo_local:'',equipo_visitante:'',fecha_hora:'2026-06-28T16:00:00' },
-  { id:200,fase:'final',equipo_local:'',equipo_visitante:'',fecha_hora:'2026-07-19T17:00:00' }
-];
-
-// 🔹 FORMATO
-const getFecha = f =>
-  new Date(f).toLocaleDateString('es-CO',{ weekday:'long',day:'numeric',month:'long' });
-
-const getHora = f =>
-  new Date(f).toLocaleTimeString('es-CO',{ hour:'2-digit',minute:'2-digit' });
+const formatHora = (fechaISO) => {
+  return new Date(fechaISO).toLocaleTimeString('es-CO', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
 
 export default function Predicciones() {
-
-  const [data,setData] = useState(partidosIniciales);
-  const [tab,setTab] = useState('grupos');
+  const [partidos, setPartidos] = useState([]);
+  const [predicciones, setPredicciones] = useState({});
+  const [tab, setTab] = useState('grupos');
 
   const tabs = ['grupos','16avos','octavos','cuartos','semis','final'];
 
-  const editarEquipo = (id,campo,valor) => {
-    setData(prev => prev.map(p => p.id===id ? {...p,[campo]:valor} : p));
+  useEffect(() => {
+    setPartidos([...partidosReales, ...generarFases()]);
+  }, []);
+
+  const onChange = (id, team, value) => {
+    const v = parseInt(value) || 0;
+    setPredicciones(prev => ({
+      ...prev,
+      [id]: { ...prev[id], [team]: v }
+    }));
   };
 
-  const filtrados = data
-    .filter(p => p.fase===tab)
-    .sort((a,b)=> new Date(a.fecha_hora)-new Date(b.fecha_hora));
+  // 🔥 FILTRAR POR FASE
+  const filtrados = partidos.filter(p => p.fase === tab);
 
-  const porFecha = filtrados.reduce((acc,p)=>{
-    const fecha = getFecha(p.fecha_hora);
-    if(!acc[fecha]) acc[fecha]=[];
-    acc[fecha].push(p);
+  // 🔥 ORDENAR POR FECHA REAL
+  const ordenados = [...filtrados].sort(
+    (a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora)
+  );
+
+  // 🔥 AGRUPAR POR FECHA (YYYY-MM-DD REAL)
+  const porFecha = ordenados.reduce((acc, p) => {
+    const key = p.fecha_hora.split('T')[0]; // 👈 clave limpia del excel
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(p);
     return acc;
-  },{});
+  }, {});
 
   return (
-    <div>
+    <div style={{ background: '#0b1d3a', minHeight: '100vh', color: '#fff' }}>
 
-      <div style={{ background:'#1D9E75',padding:12 }}>
-        <h2 style={{ color:'#fff' }}>Mundial 2026</h2>
+      {/* HEADER */}
+      <div style={{ background: '#1D9E75', padding: 12 }}>
+        <h2>Mundial 2026</h2>
       </div>
 
-      <div style={{ display:'flex',background:'#0F6E56' }}>
-        {tabs.map(t=>(
-          <button key={t} onClick={()=>setTab(t)}
-            style={{ flex:1,padding:10,color:tab===t?'#fff':'#9FE1CB',background:'none',border:'none' }}>
-            {t.toUpperCase()}
+      {/* TABS */}
+      <div style={{ display: 'flex', background: '#0F6E56' }}>
+        {tabs.map(t => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            style={{
+              flex: 1,
+              padding: 10,
+              color: tab === t ? '#fff' : '#9FE1CB',
+              background: 'none',
+              border: 'none'
+            }}
+          >
+            {t}
           </button>
         ))}
       </div>
 
-      {Object.entries(porFecha).map(([fecha,lista])=>(
+      {/* LISTA POR FECHA */}
+      {Object.entries(porFecha).map(([fecha, lista]) => (
         <div key={fecha}>
-          <h3 style={{ padding:10 }}>{fecha}</h3>
 
-          {lista.map(p=>(
-            <div key={p.id} style={{ border:'1px solid #ccc',margin:10,padding:10 }}>
+          {/* TITULO FECHA */}
+          <h3 style={{ padding: 10 }}>
+            {formatFechaTitulo(fecha)}
+          </h3>
 
-              {tab==='grupos' ? (
-                <p><strong>{p.equipo_local} vs {p.equipo_visitante}</strong></p>
-              ) : (
-                <div style={{ display:'flex',gap:5 }}>
-                  <input value={p.equipo_local}
-                    onChange={e=>editarEquipo(p.id,'equipo_local',e.target.value)} />
-                  <span>vs</span>
-                  <input value={p.equipo_visitante}
-                    onChange={e=>editarEquipo(p.id,'equipo_visitante',e.target.value)} />
+          {lista.map(p => {
+            const bl = getBandera(p.equipo_local);
+            const bv = getBandera(p.equipo_visitante);
+
+            return (
+              <div key={p.id} style={{
+                background: '#132c54',
+                margin: 10,
+                padding: 12,
+                borderRadius: 12
+              }}>
+
+                <small>{formatHora(p.fecha_hora)}</small>
+
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginTop: 10
+                }}>
+
+                  {/* LOCAL */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {bl && <img src={bl} style={{ width: 32 }} />}
+                    <span>{p.equipo_local}</span>
+                  </div>
+
+                  {/* MARCADOR */}
+                  <div>
+                    <input
+                      type="number"
+                      value={predicciones[p.id]?.s1 || 0}
+                      onChange={e => onChange(p.id,'s1',e.target.value)}
+                      style={{ width: 40, textAlign: 'center' }}
+                    />
+                    <span style={{ margin: '0 5px' }}>-</span>
+                    <input
+                      type="number"
+                      value={predicciones[p.id]?.s2 || 0}
+                      onChange={e => onChange(p.id,'s2',e.target.value)}
+                      style={{ width: 40, textAlign: 'center' }}
+                    />
+                  </div>
+
+                  {/* VISITANTE */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span>{p.equipo_visitante}</span>
+                    {bv && <img src={bv} style={{ width: 32 }} />}
+                  </div>
+
                 </div>
-              )}
-
-              <small>{getHora(p.fecha_hora)}</small>
-
-              <div style={{ display:'flex',gap:10,marginTop:10 }}>
-                {getBandera(p.equipo_local) && <img src={getBandera(p.equipo_local)} width={32}/>}
-                {getBandera(p.equipo_visitante) && <img src={getBandera(p.equipo_visitante)} width={32}/>}
               </div>
-
-            </div>
-          ))}
+            );
+          })}
         </div>
       ))}
 
-      <NavBottom/>
+      <NavBottom />
     </div>
   );
 }
