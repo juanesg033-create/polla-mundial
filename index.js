@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const crearTablas = require('./src/db/schema');
 const crearAdmin = require('./crearAdmin');
-const cargarPartidos = require('./partidos-mundial');
+
 const authRoutes = require('./src/routes/auth');
 const apiRoutes = require('./src/routes/api');
 const iniciarScheduler = require('./src/scheduler');
