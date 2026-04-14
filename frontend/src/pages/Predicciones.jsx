@@ -1,69 +1,67 @@
 import { useEffect, useState } from 'react';
 import NavBottom from '../components/NavBottom';
 
-// 🔵 SOLO PARTIDOS REALES (los que ya viste)
-const partidosReales = [
-  {
-    id: 1,
-    equipo_local: 'México',
-    equipo_visitante: 'Sudáfrica',
-    fecha_hora: '2026-06-11T14:00:00',
-    fase: 'grupos',
-    grupo: 'A'
-  },
-  {
-    id: 2,
-    equipo_local: 'Corea del Sur',
-    equipo_visitante: 'Chequia',
-    fecha_hora: '2026-06-11T21:00:00',
-    fase: 'grupos',
-    grupo: 'A'
-  },
-  {
-    id: 3,
-    equipo_local: 'Canadá',
-    equipo_visitante: 'Bosnia y Herzegovina',
-    fecha_hora: '2026-06-12T14:00:00',
-    fase: 'grupos',
-    grupo: 'B'
-  },
-  {
-    id: 4,
-    equipo_local: 'Estados Unidos',
-    equipo_visitante: 'Paraguay',
-    fecha_hora: '2026-06-12T20:00:00',
-    fase: 'grupos',
-    grupo: 'D'
-  },
-  {
-    id: 5,
-    equipo_local: 'Catar',
-    equipo_visitante: 'Suiza',
-    fecha_hora: '2026-06-13T14:00:00',
-    fase: 'grupos',
-    grupo: 'B'
-  },
-  {
-    id: 6,
-    equipo_local: 'Brasil',
-    equipo_visitante: 'Marruecos',
-    fecha_hora: '2026-06-13T17:00:00',
-    fase: 'grupos',
-    grupo: 'C'
-  }
-];
+// 🟢 FASE DE GRUPOS (estructura real FIFA)
+const generarGrupos = () => {
+  let id = 1;
+  const partidos = [];
 
-// 🔴 GENERADOR DE TODO LO DEMÁS (SIN INVENTAR EQUIPOS)
+  const grupos = 'ABCDEFGHIJKL'.split('');
+  const horarios = ['11:00:00', '14:00:00', '17:00:00', '20:00:00'];
+
+  let fechaBase = new Date('2026-06-11T11:00:00');
+
+  grupos.forEach((grupo) => {
+    const equipos = [`${grupo}1`, `${grupo}2`, `${grupo}3`, `${grupo}4`];
+
+    const cruces = [
+      [equipos[0], equipos[1]],
+      [equipos[2], equipos[3]],
+      [equipos[0], equipos[2]],
+      [equipos[1], equipos[3]],
+      [equipos[0], equipos[3]],
+      [equipos[1], equipos[2]]
+    ];
+
+    cruces.forEach((c, i) => {
+      const fecha = new Date(fechaBase);
+      fecha.setDate(fechaBase.getDate() + Math.floor(id / 4));
+
+      const hora = horarios[i % 4].split(':');
+      fecha.setHours(hora[0], hora[1]);
+
+      partidos.push({
+        id: id++,
+        equipo_local: c[0],
+        equipo_visitante: c[1],
+        fecha_hora: fecha.toISOString(),
+        fase: 'grupos',
+        grupo
+      });
+    });
+  });
+
+  return partidos;
+};
+
+// 🔴 ELIMINATORIAS (fechas reales)
 const generarFases = () => {
   let id = 1000;
-  const hoy = new Date().toISOString();
+
+  const fechas = {
+    '16avos': '2026-06-28T16:00:00',
+    'octavos': '2026-07-04T16:00:00',
+    'cuartos': '2026-07-09T16:00:00',
+    'semis': '2026-07-14T18:00:00',
+    'final': '2026-07-19T17:00:00'
+  };
 
   const crear = (fase, cantidad) =>
-    Array.from({ length: cantidad }, () => ({
+    Array.from({ length: cantidad }, (_, i) => ({
       id: id++,
       equipo_local: 'Por definir',
       equipo_visitante: 'Por definir',
-      fecha_hora: hoy,
+      fecha_hora: fechas[fase],
       fase,
       grupo: ''
     }));
@@ -76,16 +74,6 @@ const generarFases = () => {
     ...crear('final', 1)
   ];
 };
-
-// 🏳️ BANDERAS (solo si existe país real)
-const banderas = {
-  'México': 'mx','Sudáfrica': 'za','Corea del Sur': 'kr','Chequia': 'cz',
-  'Canadá': 'ca','Bosnia y Herzegovina': 'ba','Estados Unidos': 'us','Paraguay': 'py',
-  'Catar': 'qa','Suiza': 'ch','Brasil': 'br','Marruecos': 'ma'
-};
-
-const getBandera = (pais) =>
-  banderas[pais] ? `https://flagcdn.com/w40/${banderas[pais]}.png` : null;
 
 const getFecha = (f) =>
   new Date(f).toLocaleDateString('es-CO', {
@@ -108,20 +96,23 @@ export default function Predicciones() {
   const tabs = ['grupos','16avos','octavos','cuartos','semis','final'];
 
   useEffect(() => {
+    const grupos = generarGrupos();
     const fases = generarFases();
-    setPartidos([...partidosReales, ...fases]);
+    setPartidos([...grupos, ...fases]);
   }, []);
 
   const onChange = (id, team, value) => {
-    const v = parseInt(value) || 0;
+    const v = parseInt(value);
 
     setPredicciones(prev => ({
       ...prev,
-      [id]: { ...prev[id], [team]: v }
+      [id]: { ...prev[id], [team]: isNaN(v) ? '' : v }
     }));
   };
 
-  const filtrados = partidos.filter(p => p.fase === tab);
+  const filtrados = partidos
+    .filter(p => p.fase === tab)
+    .sort((a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora));
 
   const porFecha = filtrados.reduce((acc, p) => {
     const key = getFecha(p.fecha_hora);
@@ -152,7 +143,7 @@ export default function Predicciones() {
               border: 'none'
             }}
           >
-            {t}
+            {t.toUpperCase()}
           </button>
         ))}
       </div>
@@ -162,49 +153,30 @@ export default function Predicciones() {
         <div key={fecha}>
           <h3 style={{ padding: 10 }}>{fecha}</h3>
 
-          {lista.map(p => {
-            const bl = getBandera(p.equipo_local);
-            const bv = getBandera(p.equipo_visitante);
+          {lista.map(p => (
+            <div key={p.id} style={{ border: '1px solid #ccc', margin: 10, padding: 10 }}>
+              
+              <p><strong>{p.equipo_local} vs {p.equipo_visitante}</strong></p>
+              <small>{getHora(p.fecha_hora)}</small>
 
-            return (
-              <div key={p.id} style={{ border: '1px solid #ccc', margin: 10, padding: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
                 
-                <p><strong>{p.equipo_local} vs {p.equipo_visitante}</strong></p>
-                <small>{getHora(p.fecha_hora)}</small>
+                <input
+                  type="number"
+                  value={predicciones[p.id]?.s1 ?? ''}
+                  onChange={e => onChange(p.id,'s1',e.target.value)}
+                />
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
-                  
-                  <div style={{ textAlign: 'center' }}>
-                    {bl ? (
-                      <img src={bl} style={{ width: 32 }} />
-                    ) : (
-                      <div style={{ width: 32, height: 22, background: '#eee' }} />
-                    )}
-                    <input
-                      type="number"
-                      value={predicciones[p.id]?.s1 || 0}
-                      onChange={e => onChange(p.id,'s1',e.target.value)}
-                    />
-                  </div>
-
-                  <div style={{ textAlign: 'center' }}>
-                    {bv ? (
-                      <img src={bv} style={{ width: 32 }} />
-                    ) : (
-                      <div style={{ width: 32, height: 22, background: '#eee' }} />
-                    )}
-                    <input
-                      type="number"
-                      value={predicciones[p.id]?.s2 || 0}
-                      onChange={e => onChange(p.id,'s2',e.target.value)}
-                    />
-                  </div>
-
-                </div>
+                <input
+                  type="number"
+                  value={predicciones[p.id]?.s2 ?? ''}
+                  onChange={e => onChange(p.id,'s2',e.target.value)}
+                />
 
               </div>
-            );
-          })}
+
+            </div>
+          ))}
         </div>
       ))}
 
