@@ -26,7 +26,9 @@ const getBandera = (pais) => {
   return codigo ? `https://flagcdn.com/w40/${codigo}.png` : null;
 };
 
-const esPlaceholder = (nombre) => /\d[A-Z]/.test(nombre);
+const esPlaceholder = (nombre) => {
+  return /\d[A-Z]/.test(nombre) || nombre.includes('Mejor');
+};
 
 const getFechaKey = (fecha) => {
   const d = new Date(fecha);
@@ -66,23 +68,25 @@ export default function Predicciones() {
         ).values()
       );
 
-      // 🔥 si no hay 16avos, los creamos
+      // 🔥 Generar 16avos si no existen (estructura realista)
       const hay16avos = unicos.some(p => p.fase === '16avos');
 
       if (!hay16avos) {
         const hoy = new Date();
 
         const mock16avos = [
-          { id: 9001, equipo_local: '1A', equipo_visitante: '3C' },
-          { id: 9002, equipo_local: '2B', equipo_visitante: '2F' },
-          { id: 9003, equipo_local: '1C', equipo_visitante: '3E' },
-          { id: 9004, equipo_local: '2A', equipo_visitante: '2D' },
-          { id: 9005, equipo_local: '1B', equipo_visitante: '3F' },
-          { id: 9006, equipo_local: '2C', equipo_visitante: '2E' },
-          { id: 9007, equipo_local: '1D', equipo_visitante: '3B' },
-          { id: 9008, equipo_local: '2A', equipo_visitante: '3D' }
-        ].map(p => ({
-          ...p,
+          ['1A','Mejor 3°'],
+          ['2B','2F'],
+          ['1C','Mejor 3°'],
+          ['2A','2D'],
+          ['1B','Mejor 3°'],
+          ['2C','2E'],
+          ['1D','Mejor 3°'],
+          ['2A','Mejor 3°']
+        ].map((c, i) => ({
+          id: 9000 + i,
+          equipo_local: c[0],
+          equipo_visitante: c[1],
           fecha_hora: hoy.toISOString(),
           cierre_prediccion: hoy.toISOString(),
           fase: '16avos',
