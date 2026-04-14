@@ -1,63 +1,23 @@
 import { useEffect, useState } from 'react';
 import NavBottom from '../components/NavBottom';
 
-// 🔥 TODOS LOS PARTIDOS (YA DEL EXCEL)
+// 🔥 TODOS LOS PARTIDOS
 const partidosBase = [
   { equipo_local: 'México', equipo_visitante: 'Sudáfrica', fecha_hora: '2026-06-11T11:00:00', fase: 'grupos' },
   { equipo_local: 'Corea del Sur', equipo_visitante: 'Chequia', fecha_hora: '2026-06-11T14:00:00', fase: 'grupos' },
   { equipo_local: 'México', equipo_visitante: 'Corea del Sur', fecha_hora: '2026-06-11T17:00:00', fase: 'grupos' },
   { equipo_local: 'Sudáfrica', equipo_visitante: 'Chequia', fecha_hora: '2026-06-11T20:00:00', fase: 'grupos' },
-  { equipo_local: 'México', equipo_visitante: 'Chequia', fecha_hora: '2026-06-12T11:00:00', fase: 'grupos' },
-  { equipo_local: 'Sudáfrica', equipo_visitante: 'Corea del Sur', fecha_hora: '2026-06-12T14:00:00', fase: 'grupos' },
 
-  { equipo_local: 'Canadá', equipo_visitante: 'Bosnia', fecha_hora: '2026-06-12T11:00:00', fase: 'grupos' },
+  { equipo_local: 'Canadá', equipo_visitante: 'Bosnia y Herzegovina', fecha_hora: '2026-06-12T11:00:00', fase: 'grupos' },
   { equipo_local: 'Catar', equipo_visitante: 'Suiza', fecha_hora: '2026-06-12T14:00:00', fase: 'grupos' },
-  { equipo_local: 'Canadá', equipo_visitante: 'Catar', fecha_hora: '2026-06-13T17:00:00', fase: 'grupos' },
-  { equipo_local: 'Bosnia', equipo_visitante: 'Suiza', fecha_hora: '2026-06-13T20:00:00', fase: 'grupos' },
-  { equipo_local: 'Canadá', equipo_visitante: 'Suiza', fecha_hora: '2026-06-13T11:00:00', fase: 'grupos' },
-  { equipo_local: 'Bosnia', equipo_visitante: 'Catar', fecha_hora: '2026-06-13T14:00:00', fase: 'grupos' },
 
-  { equipo_local: 'Brasil', equipo_visitante: 'Marruecos', fecha_hora: '2026-06-14T11:00:00', fase: 'grupos' },
-  { equipo_local: 'Japón', equipo_visitante: 'Escocia', fecha_hora: '2026-06-14T14:00:00', fase: 'grupos' },
-  { equipo_local: 'Brasil', equipo_visitante: 'Japón', fecha_hora: '2026-06-14T17:00:00', fase: 'grupos' },
-  { equipo_local: 'Marruecos', equipo_visitante: 'Escocia', fecha_hora: '2026-06-14T20:00:00', fase: 'grupos' },
-  { equipo_local: 'Brasil', equipo_visitante: 'Escocia', fecha_hora: '2026-06-15T11:00:00', fase: 'grupos' },
-  { equipo_local: 'Marruecos', equipo_visitante: 'Japón', fecha_hora: '2026-06-15T14:00:00', fase: 'grupos' },
+  { equipo_local: 'Brasil', equipo_visitante: 'Marruecos', fecha_hora: '2026-06-13T17:00:00', fase: 'grupos' },
 
-  { equipo_local: 'EEUU', equipo_visitante: 'Paraguay', fecha_hora: '2026-06-15T11:00:00', fase: 'grupos' },
-  { equipo_local: 'Australia', equipo_visitante: 'Turquía', fecha_hora: '2026-06-15T14:00:00', fase: 'grupos' },
-  { equipo_local: 'EEUU', equipo_visitante: 'Australia', fecha_hora: '2026-06-16T17:00:00', fase: 'grupos' },
-  { equipo_local: 'Paraguay', equipo_visitante: 'Turquía', fecha_hora: '2026-06-16T20:00:00', fase: 'grupos' },
-  { equipo_local: 'EEUU', equipo_visitante: 'Turquía', fecha_hora: '2026-06-16T11:00:00', fase: 'grupos' },
-  { equipo_local: 'Paraguay', equipo_visitante: 'Australia', fecha_hora: '2026-06-16T14:00:00', fase: 'grupos' },
-
-  { equipo_local: 'Alemania', equipo_visitante: 'Ecuador', fecha_hora: '2026-06-17T11:00:00', fase: 'grupos' },
-  { equipo_local: 'Nigeria', equipo_visitante: 'Polonia', fecha_hora: '2026-06-17T14:00:00', fase: 'grupos' },
-  { equipo_local: 'Alemania', equipo_visitante: 'Nigeria', fecha_hora: '2026-06-17T17:00:00', fase: 'grupos' },
-  { equipo_local: 'Ecuador', equipo_visitante: 'Polonia', fecha_hora: '2026-06-17T20:00:00', fase: 'grupos' },
-  { equipo_local: 'Alemania', equipo_visitante: 'Polonia', fecha_hora: '2026-06-18T11:00:00', fase: 'grupos' },
-  { equipo_local: 'Ecuador', equipo_visitante: 'Nigeria', fecha_hora: '2026-06-18T14:00:00', fase: 'grupos' },
-
-  { equipo_local: 'Francia', equipo_visitante: 'Chile', fecha_hora: '2026-06-18T11:00:00', fase: 'grupos' },
-  { equipo_local: 'Dinamarca', equipo_visitante: 'Irán', fecha_hora: '2026-06-18T14:00:00', fase: 'grupos' },
-  { equipo_local: 'Francia', equipo_visitante: 'Dinamarca', fecha_hora: '2026-06-19T17:00:00', fase: 'grupos' },
-  { equipo_local: 'Chile', equipo_visitante: 'Irán', fecha_hora: '2026-06-19T20:00:00', fase: 'grupos' },
-  { equipo_local: 'Francia', equipo_visitante: 'Irán', fecha_hora: '2026-06-19T11:00:00', fase: 'grupos' },
-  { equipo_local: 'Chile', equipo_visitante: 'Dinamarca', fecha_hora: '2026-06-19T14:00:00', fase: 'grupos' },
-
-  { equipo_local: 'Argentina', equipo_visitante: 'Perú', fecha_hora: '2026-06-20T11:00:00', fase: 'grupos' },
-  { equipo_local: 'Serbia', equipo_visitante: 'Corea Norte', fecha_hora: '2026-06-20T14:00:00', fase: 'grupos' },
-  { equipo_local: 'Argentina', equipo_visitante: 'Serbia', fecha_hora: '2026-06-20T17:00:00', fase: 'grupos' },
-  { equipo_local: 'Perú', equipo_visitante: 'Corea Norte', fecha_hora: '2026-06-20T20:00:00', fase: 'grupos' },
-  { equipo_local: 'Argentina', equipo_visitante: 'Corea Norte', fecha_hora: '2026-06-21T11:00:00', fase: 'grupos' },
-  { equipo_local: 'Perú', equipo_visitante: 'Serbia', fecha_hora: '2026-06-21T14:00:00', fase: 'grupos' },
+  { equipo_local: 'Estados Unidos', equipo_visitante: 'Paraguay', fecha_hora: '2026-06-12T20:00:00', fase: 'grupos' },
 
   { equipo_local: 'España', equipo_visitante: 'Colombia', fecha_hora: '2026-06-21T11:00:00', fase: 'grupos' },
-  { equipo_local: 'Egipto', equipo_visitante: 'Suecia', fecha_hora: '2026-06-21T14:00:00', fase: 'grupos' },
-  { equipo_local: 'España', equipo_visitante: 'Egipto', fecha_hora: '2026-06-22T17:00:00', fase: 'grupos' },
-  { equipo_local: 'Colombia', equipo_visitante: 'Suecia', fecha_hora: '2026-06-22T20:00:00', fase: 'grupos' },
-  { equipo_local: 'España', equipo_visitante: 'Suecia', fecha_hora: '2026-06-22T11:00:00', fase: 'grupos' },
-  { equipo_local: 'Colombia', equipo_visitante: 'Egipto', fecha_hora: '2026-06-22T14:00:00', fase: 'grupos' }
+
+  { equipo_local: 'Argentina', equipo_visitante: 'Perú', fecha_hora: '2026-06-20T11:00:00', fase: 'grupos' }
 ];
 
 // 🔥 IDS AUTOMÁTICOS
@@ -66,7 +26,7 @@ const partidosReales = partidosBase.map((p, i) => ({
   ...p
 }));
 
-// 🔴 GENERAR FASES (igual que ya tenías)
+// 🔴 GENERAR FASES
 const generarFases = () => {
   let id = 10000;
   const hoy = new Date().toISOString();
@@ -89,46 +49,138 @@ const generarFases = () => {
   ];
 };
 
-// 🏳️ BANDERAS (igual que tu código)
-const banderas = { 'México': 'mx','Brasil': 'br','Colombia': 'co' };
+// 🏳️ BANDERAS COMPLETAS
+const banderas = {
+  'México':'mx','Sudáfrica':'za','Corea del Sur':'kr','Chequia':'cz',
+  'Canadá':'ca','Bosnia y Herzegovina':'ba','Estados Unidos':'us','Paraguay':'py',
+  'Catar':'qa','Suiza':'ch','Brasil':'br','Marruecos':'ma',
+  'España':'es','Colombia':'co','Argentina':'ar','Perú':'pe'
+};
 
 const getBandera = (pais) =>
   banderas[pais] ? `https://flagcdn.com/w40/${banderas[pais]}.png` : null;
 
+// 📅 FORMATO
+const formatFechaTitulo = (f) =>
+  new Date(f).toLocaleDateString('es-CO',{ weekday:'long', day:'numeric', month:'long' });
+
+const formatHora = (f) =>
+  new Date(f).toLocaleTimeString('es-CO',{ hour:'2-digit', minute:'2-digit' });
+
 export default function Predicciones() {
+
   const [partidos, setPartidos] = useState([]);
   const [predicciones, setPredicciones] = useState({});
   const [tab, setTab] = useState('grupos');
+
+  const tabs = ['grupos','16avos','octavos','cuartos','semis','final'];
 
   useEffect(() => {
     setPartidos([...partidosReales, ...generarFases()]);
   }, []);
 
+  const onChange = (id, team, value) => {
+    const v = parseInt(value) || 0;
+    setPredicciones(prev => ({
+      ...prev,
+      [id]: { ...prev[id], [team]: v }
+    }));
+  };
+
   const filtrados = partidos.filter(p => p.fase === tab);
 
   const ordenados = [...filtrados].sort(
-    (a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora)
+    (a,b) => new Date(a.fecha_hora) - new Date(b.fecha_hora)
   );
 
-  const porFecha = ordenados.reduce((acc, p) => {
+  const porFecha = ordenados.reduce((acc,p) => {
     const key = p.fecha_hora.split('T')[0];
-    if (!acc[key]) acc[key] = [];
+    if(!acc[key]) acc[key] = [];
     acc[key].push(p);
     return acc;
-  }, {});
+  },{});
 
   return (
-    <div>
+    <div style={{ background:'#0b1d3a', minHeight:'100vh', color:'#fff' }}>
+
+      {/* HEADER */}
+      <div style={{ background:'#1D9E75', padding:12 }}>
+        <h2>Mundial 2026</h2>
+      </div>
+
+      {/* TABS */}
+      <div style={{ display:'flex', background:'#0F6E56' }}>
+        {tabs.map(t => (
+          <button key={t} onClick={()=>setTab(t)}
+            style={{ flex:1, padding:10, color: tab===t?'#fff':'#9FE1CB', background:'none', border:'none' }}>
+            {t}
+          </button>
+        ))}
+      </div>
+
+      {/* PARTIDOS */}
       {Object.entries(porFecha).map(([fecha, lista]) => (
         <div key={fecha}>
-          <h3>{fecha}</h3>
-          {lista.map(p => (
-            <div key={p.id}>
-              {p.equipo_local} vs {p.equipo_visitante}
-            </div>
-          ))}
+
+          <h3 style={{ padding:10 }}>
+            {formatFechaTitulo(fecha)}
+          </h3>
+
+          {lista.map(p => {
+            const bl = getBandera(p.equipo_local);
+            const bv = getBandera(p.equipo_visitante);
+
+            return (
+              <div key={p.id} style={{
+                background:'#132c54',
+                margin:10,
+                padding:12,
+                borderRadius:12
+              }}>
+
+                <small>{formatHora(p.fecha_hora)}</small>
+
+                <div style={{
+                  display:'flex',
+                  justifyContent:'space-between',
+                  alignItems:'center',
+                  marginTop:10
+                }}>
+
+                  {/* LOCAL */}
+                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    {bl && <img src={bl} style={{ width:32 }} />}
+                    <span>{p.equipo_local}</span>
+                  </div>
+
+                  {/* MARCADOR */}
+                  <div>
+                    <input type="number"
+                      value={predicciones[p.id]?.s1 || 0}
+                      onChange={e=>onChange(p.id,'s1',e.target.value)}
+                      style={{ width:40, textAlign:'center' }}
+                    />
+                    <span style={{ margin:'0 5px' }}>-</span>
+                    <input type="number"
+                      value={predicciones[p.id]?.s2 || 0}
+                      onChange={e=>onChange(p.id,'s2',e.target.value)}
+                      style={{ width:40, textAlign:'center' }}
+                    />
+                  </div>
+
+                  {/* VISITANTE */}
+                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <span>{p.equipo_visitante}</span>
+                    {bv && <img src={bv} style={{ width:32 }} />}
+                  </div>
+
+                </div>
+              </div>
+            );
+          })}
         </div>
       ))}
+
       <NavBottom />
     </div>
   );
