@@ -10,7 +10,7 @@ router.post('/usuarios', verificarToken, soloAdmin, crearUsuario);
 router.put('/usuarios/:id/toggle', verificarToken, soloAdmin, toggleUsuario);
 router.delete('/usuarios/:id', verificarToken, soloAdmin, eliminarUsuario);
 
-router.get('/partidos', verificarToken, listarPartidos);
+router.get('/partidos', listarPartidos);
 router.post('/partidos', verificarToken, soloAdmin, crearPartido);
 router.put('/partidos/:id/resultado', verificarToken, soloAdmin, ingresarResultado);
 
