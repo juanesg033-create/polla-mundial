@@ -1,6 +1,40 @@
 import { useEffect, useState } from 'react';
-import * as XLSX from 'xlsx';
 import NavBottom from '../components/NavBottom';
+
+// 🔥 PEGA AQUÍ TODOS LOS PARTIDOS DEL EXCEL
+const partidosReales = [
+  { id: 1, equipo_local: 'México', equipo_visitante: 'Sudáfrica', fecha_hora: '2026-06-11T14:00:00', fase: 'grupos' },
+  { id: 2, equipo_local: 'Corea del Sur', equipo_visitante: 'Chequia', fecha_hora: '2026-06-11T21:00:00', fase: 'grupos' },
+  { id: 3, equipo_local: 'Canadá', equipo_visitante: 'Bosnia y Herzegovina', fecha_hora: '2026-06-12T14:00:00', fase: 'grupos' },
+  { id: 4, equipo_local: 'Estados Unidos', equipo_visitante: 'Paraguay', fecha_hora: '2026-06-12T20:00:00', fase: 'grupos' },
+  { id: 5, equipo_local: 'Catar', equipo_visitante: 'Suiza', fecha_hora: '2026-06-13T14:00:00', fase: 'grupos' },
+  { id: 6, equipo_local: 'Brasil', equipo_visitante: 'Marruecos', fecha_hora: '2026-06-13T17:00:00', fase: 'grupos' }
+
+  // 👇 PEGA AQUÍ TODOS LOS DEMÁS PARTIDOS DEL EXCEL
+];
+
+// 🔴 GENERAR FASES (igual que tu código)
+const generarFases = () => {
+  let id = 10000;
+  const hoy = new Date().toISOString();
+
+  const crear = (fase, cantidad) =>
+    Array.from({ length: cantidad }, () => ({
+      id: id++,
+      equipo_local: 'Por definir',
+      equipo_visitante: 'Por definir',
+      fecha_hora: hoy,
+      fase
+    }));
+
+  return [
+    ...crear('16avos', 16),
+    ...crear('octavos', 8),
+    ...crear('cuartos', 4),
+    ...crear('semis', 2),
+    ...crear('final', 1)
+  ];
+};
 
 // 🏳️ BANDERAS
 const banderas = {
@@ -12,20 +46,7 @@ const banderas = {
 const getBandera = (pais) =>
   banderas[pais] ? `https://flagcdn.com/w40/${banderas[pais]}.png` : null;
 
-// 🔥 CONVERTIR FECHA EXCEL (CLAVE)
-const excelDateToJS = (excelDate) => {
-  if (!excelDate) return new Date();
-
-  // Si es número (formato Excel)
-  if (typeof excelDate === 'number') {
-    return new Date((excelDate - 25569) * 86400 * 1000);
-  }
-
-  // Si ya es string
-  return new Date(excelDate);
-};
-
-// 🔥 FORMATEAR FECHA
+// 📅 FORMATO
 const formatFechaTitulo = (fechaISO) =>
   new Date(fechaISO).toLocaleDateString('es-CO', {
     weekday: 'long',
@@ -42,53 +63,13 @@ const formatHora = (fechaISO) =>
 export default function Predicciones() {
   const [partidos, setPartidos] = useState([]);
   const [predicciones, setPredicciones] = useState({});
+  const [tab, setTab] = useState('grupos');
+
+  const tabs = ['grupos','16avos','octavos','cuartos','semis','final'];
 
   useEffect(() => {
-    cargarExcel();
+    setPartidos([...partidosReales, ...generarFases()]);
   }, []);
-
-  // ✅ CARGA SEGURA DEL EXCEL
-  const cargarExcel = async () => {
-    try {
-      const res = await fetch('/mundial_2026_con_equipos.xlsx');
-      const data = await res.arrayBuffer();
-
-      const workbook = XLSX.read(data, { type: 'array' });
-      const hoja = workbook.Sheets[workbook.SheetNames[0]];
-      const json = XLSX.utils.sheet_to_json(hoja);
-
-      const partidosFormateados = json.map((p, i) => {
-        const fechaBase = excelDateToJS(p.Fecha);
-
-        // ⏰ agregar hora si existe
-        if (p.Hora) {
-          let horas = 0, minutos = 0;
-
-          if (typeof p.Hora === 'string') {
-            const partes = p.Hora.split(':');
-            horas = parseInt(partes[0]) || 0;
-            minutos = parseInt(partes[1]) || 0;
-          }
-
-          fechaBase.setHours(horas);
-          fechaBase.setMinutes(minutos);
-        }
-
-        return {
-          id: i + 1,
-          equipo_local: p.Local || 'Por definir',
-          equipo_visitante: p.Visitante || 'Por definir',
-          fecha_hora: fechaBase.toISOString(),
-          fase: 'grupos'
-        };
-      });
-
-      setPartidos(partidosFormateados);
-
-    } catch (error) {
-      console.error('Error cargando Excel:', error);
-    }
-  };
 
   const onChange = (id, team, value) => {
     const v = parseInt(value) || 0;
@@ -98,9 +79,12 @@ export default function Predicciones() {
     }));
   };
 
-  // 🔥 ORDENAR
-  const ordenados = [...partidos].sort(
-    (a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora)
+  // 🔥 FILTRAR POR FASE
+  const filtrados = partidos.filter(p => p.fase === tab);
+
+  // 🔥 ORDENAR POR FECHA
+  const ordenados = [...filtrados].sort(
+    (a, b) => new Date(a.fecha_hora || 0) - new Date(b.fecha_hora || 0)
   );
 
   // 🔥 AGRUPAR POR FECHA REAL
@@ -117,6 +101,25 @@ export default function Predicciones() {
       {/* HEADER */}
       <div style={{ background: '#1D9E75', padding: 12 }}>
         <h2>Mundial 2026</h2>
+      </div>
+
+      {/* TABS */}
+      <div style={{ display: 'flex', background: '#0F6E56' }}>
+        {tabs.map(t => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            style={{
+              flex: 1,
+              padding: 10,
+              color: tab === t ? '#fff' : '#9FE1CB',
+              background: 'none',
+              border: 'none'
+            }}
+          >
+            {t}
+          </button>
+        ))}
       </div>
 
       {/* LISTA */}
@@ -143,8 +146,8 @@ export default function Predicciones() {
 
                 <div style={{
                   display: 'flex',
-                  justifyContent: 'space-between',
                   alignItems: 'center',
+                  justifyContent: 'space-between',
                   marginTop: 10
                 }}>
 
