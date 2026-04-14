@@ -1,19 +1,25 @@
 import { useEffect, useState } from 'react';
 import NavBottom from '../components/NavBottom';
 
-// 🔥 PEGA AQUÍ TODOS LOS PARTIDOS DEL EXCEL
-const partidosReales = [
-  { id: 1, equipo_local: 'México', equipo_visitante: 'Sudáfrica', fecha_hora: '2026-06-11T14:00:00', fase: 'grupos' },
-  { id: 2, equipo_local: 'Corea del Sur', equipo_visitante: 'Chequia', fecha_hora: '2026-06-11T21:00:00', fase: 'grupos' },
-  { id: 3, equipo_local: 'Canadá', equipo_visitante: 'Bosnia y Herzegovina', fecha_hora: '2026-06-12T14:00:00', fase: 'grupos' },
-  { id: 4, equipo_local: 'Estados Unidos', equipo_visitante: 'Paraguay', fecha_hora: '2026-06-12T20:00:00', fase: 'grupos' },
-  { id: 5, equipo_local: 'Catar', equipo_visitante: 'Suiza', fecha_hora: '2026-06-13T14:00:00', fase: 'grupos' },
-  { id: 6, equipo_local: 'Brasil', equipo_visitante: 'Marruecos', fecha_hora: '2026-06-13T17:00:00', fase: 'grupos' }
+// 🔥 PEGA TODOS LOS PARTIDOS AQUÍ (SIN ID)
+const partidosBase = [
+  { equipo_local: 'México', equipo_visitante: 'Sudáfrica', fecha_hora: '2026-06-11T14:00:00', fase: 'grupos' },
+  { equipo_local: 'Corea del Sur', equipo_visitante: 'Chequia', fecha_hora: '2026-06-11T21:00:00', fase: 'grupos' },
+  { equipo_local: 'Canadá', equipo_visitante: 'Bosnia y Herzegovina', fecha_hora: '2026-06-12T14:00:00', fase: 'grupos' },
+  { equipo_local: 'Estados Unidos', equipo_visitante: 'Paraguay', fecha_hora: '2026-06-12T20:00:00', fase: 'grupos' },
+  { equipo_local: 'Catar', equipo_visitante: 'Suiza', fecha_hora: '2026-06-13T14:00:00', fase: 'grupos' },
+  { equipo_local: 'Brasil', equipo_visitante: 'Marruecos', fecha_hora: '2026-06-13T17:00:00', fase: 'grupos' }
 
-  // 👇 PEGA AQUÍ TODOS LOS DEMÁS PARTIDOS DEL EXCEL
+  // 👇 PEGA TODO TU EXCEL AQUÍ (sin id, solo copia filas)
 ];
 
-// 🔴 GENERAR FASES (igual que tu código)
+// 🔴 GENERAR IDS AUTOMÁTICOS (🔥 ESTO SOLUCIONA TU ERROR)
+const partidosReales = partidosBase.map((p, i) => ({
+  id: i + 1,
+  ...p
+}));
+
+// 🔴 GENERAR FASES
 const generarFases = () => {
   let id = 10000;
   const hoy = new Date().toISOString();
@@ -79,15 +85,12 @@ export default function Predicciones() {
     }));
   };
 
-  // 🔥 FILTRAR POR FASE
   const filtrados = partidos.filter(p => p.fase === tab);
 
-  // 🔥 ORDENAR POR FECHA
   const ordenados = [...filtrados].sort(
     (a, b) => new Date(a.fecha_hora || 0) - new Date(b.fecha_hora || 0)
   );
 
-  // 🔥 AGRUPAR POR FECHA REAL
   const porFecha = ordenados.reduce((acc, p) => {
     const key = p.fecha_hora.split('T')[0];
     if (!acc[key]) acc[key] = [];
@@ -98,12 +101,10 @@ export default function Predicciones() {
   return (
     <div style={{ background: '#0b1d3a', minHeight: '100vh', color: '#fff' }}>
 
-      {/* HEADER */}
       <div style={{ background: '#1D9E75', padding: 12 }}>
         <h2>Mundial 2026</h2>
       </div>
 
-      {/* TABS */}
       <div style={{ display: 'flex', background: '#0F6E56' }}>
         {tabs.map(t => (
           <button
@@ -122,7 +123,6 @@ export default function Predicciones() {
         ))}
       </div>
 
-      {/* LISTA */}
       {Object.entries(porFecha).map(([fecha, lista]) => (
         <div key={fecha}>
 
@@ -151,7 +151,6 @@ export default function Predicciones() {
                   marginTop: 10
                 }}>
 
-                  {/* LOCAL */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     {bl
                       ? <img src={bl} style={{ width: 32 }} />
@@ -160,7 +159,6 @@ export default function Predicciones() {
                     <span>{p.equipo_local}</span>
                   </div>
 
-                  {/* MARCADOR */}
                   <div>
                     <input
                       type="number"
@@ -177,7 +175,6 @@ export default function Predicciones() {
                     />
                   </div>
 
-                  {/* VISITANTE */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span>{p.equipo_visitante}</span>
                     {bv
