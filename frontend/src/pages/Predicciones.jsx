@@ -131,6 +131,7 @@ const formatHora = (f) =>
 
 export default function Predicciones() {
   const [partidosDB, setPartidosDB] = useState([]);
+  // predicciones usa el id LOCAL (1-72) como clave para poder editar antes de que cargue la DB
   const [predicciones, setPredicciones] = useState({});
   const [guardados, setGuardados] = useState({});
   const [guardando, setGuardando] = useState({});
@@ -140,43 +141,78 @@ export default function Predicciones() {
   const tabLabel = { grupos:'Grupos','16avos':'16avos',octavos:'Octavos',cuartos:'Cuartos',semis:'Semis',final:'Final' };
 
   useEffect(() => {
+    // Cargar partidos reales de la DB para obtener sus UUIDs
     api.getPartidos().then(data => {
       if (Array.isArray(data)) setPartidosDB(data);
     });
+
+    // Cargar predicciones previas
     api.misPredicciones().then(data => {
       if (Array.isArray(data)) {
-        const mapa = {};
-        const gmap = {};
+        const predMap = {};
+        const guardMap = {};
         data.forEach(p => {
-          mapa[p.partido_id] = { s1: p.goles_local, s2: p.goles_visitante };
-          gmap[p.partido_id] = true;
+          // Buscar el partido local que corresponde a este UUID
+          const local = todosPartidos.find(lp => {
+            // Buscar por nombre en la DB cuando la tengamos
+            return false; // Se resuelve después de cargar la DB
+          });
+          // Guardar temporalmente por partido_id (UUID)
+          predMap[`uuid_${p.partido_id}`] = { s1: p.goles_local, s2: p.goles_visitante };
+          guardMap[`uuid_${p.partido_id}`] = true;
         });
-        setPredicciones(mapa);
-        setGuardados(gmap);
+        setPredicciones(prev => ({ ...prev, ...predMap }));
+        setGuardados(prev => ({ ...prev, ...guardMap }));
       }
     });
   }, []);
 
-  // Buscar el UUID real del partido en la DB por nombre de equipos
-  const getPartidoReal = (p) =>
-    partidosDB.find(db =>
-      db.equipo_local.trim() === p.equipo_local.trim() &&
-      db.equipo_visitante.trim() === p.equipo_visitante.trim()
-    );
+  // Cuando carga la DB, cruzar predicciones previas con IDs locales
+  useEffect(() => {
+    if (partidosDB.length === 0) return;
+    api.misPredicciones().then(data => {
+      if (!Array.isArray(data)) return;
+      const predMap = {};
+      const guardMap = {};
+      data.forEach(p => {
+        const dbPartido = partidosDB.find(db => db.id === p.partido_id);
+        if (!dbPartido) return;
+        const localPartido = todosPartidos.find(
+          lp => lp.equipo_local === dbPartido.equipo_local &&
+                lp.equipo_visitante === dbPartido.equipo_visitante
+        );
+        if (!localPartido) return;
+        predMap[localPartido.id] = { s1: p.goles_local, s2: p.goles_visitante };
+        guardMap[localPartido.id] = true;
+      });
+      setPredicciones(prev => ({ ...prev, ...predMap }));
+      setGuardados(prev => ({ ...prev, ...guardMap }));
+    });
+  }, [partidosDB]);
 
-  const onChange = (realId, team, value) => {
+  // onChange usa el id LOCAL — siempre funciona
+  const onChange = (localId, team, value) => {
     const v = Math.max(0, Math.min(99, parseInt(value) || 0));
-    setPredicciones(prev => ({ ...prev, [realId]: { ...prev[realId], [team]: v } }));
-    setGuardados(prev => ({ ...prev, [realId]: false }));
+    setPredicciones(prev => ({ ...prev, [localId]: { ...prev[localId], [team]: v } }));
+    setGuardados(prev => ({ ...prev, [localId]: false }));
   };
 
-  const guardar = async (p, realId) => {
-    const pred = predicciones[realId] || { s1: 0, s2: 0 };
-    setGuardando(prev => ({ ...prev, [realId]: true }));
-    const res = await api.guardarPrediccion(realId, pred.s1, pred.s2);
-    setGuardando(prev => ({ ...prev, [realId]: false }));
+  const guardar = async (p) => {
+    // Buscar UUID real en la DB por nombre
+    const dbPartido = partidosDB.find(
+      db => db.equipo_local.trim() === p.equipo_local.trim() &&
+            db.equipo_visitante.trim() === p.equipo_visitante.trim()
+    );
+    if (!dbPartido) {
+      alert(`Partido no encontrado en el servidor. Intenta de nuevo en unos segundos.`);
+      return;
+    }
+    const pred = predicciones[p.id] || { s1: 0, s2: 0 };
+    setGuardando(prev => ({ ...prev, [p.id]: true }));
+    const res = await api.guardarPrediccion(dbPartido.id, pred.s1, pred.s2);
+    setGuardando(prev => ({ ...prev, [p.id]: false }));
     if (res.error) { alert('Error: ' + res.error); return; }
-    setGuardados(prev => ({ ...prev, [realId]: true }));
+    setGuardados(prev => ({ ...prev, [p.id]: true }));
   };
 
   const filtrados = todosPartidos
@@ -225,11 +261,9 @@ export default function Predicciones() {
 
             {lista.map(p => {
               const esPorDefinir = p.equipo_local === 'Por definir';
-              const partidoReal = getPartidoReal(p);
-              const realId = partidoReal?.id;
-              const pred = predicciones[realId] || { s1: 0, s2: 0 };
-              const yaGuardado = !!guardados[realId];
-              const cargando = !!guardando[realId];
+              const pred = predicciones[p.id] || { s1: 0, s2: 0 };
+              const yaGuardado = !!guardados[p.id];
+              const cargando = !!guardando[p.id];
               const bl = getBandera(p.equipo_local);
               const bv = getBandera(p.equipo_visitante);
 
@@ -250,25 +284,33 @@ export default function Predicciones() {
                       <span style={{ fontSize:12, fontWeight:600 }}>{p.equipo_local}</span>
                     </div>
                     <div style={{ display:'flex', alignItems:'center', gap:6, padding:'0 10px' }}>
-                      <input type="number" min="0" max="99"
+                      <input
+                        type="number" min="0" max="99"
                         value={pred.s1}
                         disabled={esPorDefinir}
-                        onChange={e => realId && onChange(realId, 's1', e.target.value)}
-                        style={{ width:40, height:40, textAlign:'center', fontSize:18, fontWeight:700,
+                        onChange={e => onChange(p.id, 's1', e.target.value)}
+                        style={{
+                          width:40, height:40, textAlign:'center', fontSize:18, fontWeight:700,
                           background: esPorDefinir ? '#0d2137' : '#0e3d2a',
                           color: esPorDefinir ? '#333' : '#3ddc97',
                           border: '2px solid ' + (esPorDefinir ? '#1a4060' : yaGuardado ? '#3ddc97' : '#2a6a50'),
-                          borderRadius:8, outline:'none' }} />
+                          borderRadius:8, outline:'none',
+                        }}
+                      />
                       <span style={{ color:'#555', fontWeight:700 }}>—</span>
-                      <input type="number" min="0" max="99"
+                      <input
+                        type="number" min="0" max="99"
                         value={pred.s2}
                         disabled={esPorDefinir}
-                        onChange={e => realId && onChange(realId, 's2', e.target.value)}
-                        style={{ width:40, height:40, textAlign:'center', fontSize:18, fontWeight:700,
+                        onChange={e => onChange(p.id, 's2', e.target.value)}
+                        style={{
+                          width:40, height:40, textAlign:'center', fontSize:18, fontWeight:700,
                           background: esPorDefinir ? '#0d2137' : '#0e3d2a',
                           color: esPorDefinir ? '#333' : '#3ddc97',
                           border: '2px solid ' + (esPorDefinir ? '#1a4060' : yaGuardado ? '#3ddc97' : '#2a6a50'),
-                          borderRadius:8, outline:'none' }} />
+                          borderRadius:8, outline:'none',
+                        }}
+                      />
                     </div>
                     <div style={{ flex:1, textAlign:'center' }}>
                       {bv && <img src={bv} alt={p.equipo_visitante} style={{ width:32, height:22, objectFit:'cover', borderRadius:3, display:'block', margin:'0 auto 4px' }} />}
@@ -278,16 +320,16 @@ export default function Predicciones() {
 
                   {!esPorDefinir && (
                     <button
-                      onClick={() => realId && guardar(p, realId)}
-                      disabled={cargando || !realId}
+                      onClick={() => guardar(p)}
+                      disabled={cargando}
                       style={{
                         width:'100%', marginTop:10, padding:'10px',
                         background: yaGuardado ? '#0e3d2a' : '#1a7a55',
                         color: yaGuardado ? '#3ddc97' : '#fff',
                         fontWeight:600, fontSize:12,
                         border: yaGuardado ? '1px solid #3ddc97' : 'none',
-                        borderRadius:8, cursor: (cargando || !realId) ? 'not-allowed' : 'pointer',
-                        opacity: (cargando || !realId) ? 0.6 : 1,
+                        borderRadius:8, cursor: cargando ? 'wait' : 'pointer',
+                        opacity: cargando ? 0.6 : 1,
                       }}>
                       {cargando ? 'Guardando...' : yaGuardado ? '✓ Guardado' : 'Guardar predicción'}
                     </button>
