@@ -1,12 +1,27 @@
 import { useEffect, useState } from 'react';
 import NavBottom from '../components/NavBottom';
 
-// 🟢 MAPA DE EQUIPOS (editable)
+// 🟢 MAPA COMPLETO (puedes editarlo luego)
 const equiposMap = {
   A1: { nombre: 'México', codigo: 'mx' },
   A2: { nombre: 'Sudáfrica', codigo: 'za' },
   A3: { nombre: 'Corea del Sur', codigo: 'kr' },
-  A4: { nombre: 'Chequia', codigo: 'cz' }
+  A4: { nombre: 'Chequia', codigo: 'cz' },
+
+  B1: { nombre: 'Canadá', codigo: 'ca' },
+  B2: { nombre: 'Bosnia', codigo: 'ba' },
+  B3: { nombre: 'Catar', codigo: 'qa' },
+  B4: { nombre: 'Suiza', codigo: 'ch' },
+
+  C1: { nombre: 'Brasil', codigo: 'br' },
+  C2: { nombre: 'Marruecos', codigo: 'ma' },
+  C3: { nombre: 'Japón', codigo: 'jp' },
+  C4: { nombre: 'Escocia', codigo: 'gb' },
+
+  D1: { nombre: 'Estados Unidos', codigo: 'us' },
+  D2: { nombre: 'Paraguay', codigo: 'py' },
+  D3: { nombre: 'Australia', codigo: 'au' },
+  D4: { nombre: 'Turquía', codigo: 'tr' }
 };
 
 // 🔹 HELPERS
@@ -17,17 +32,17 @@ const getBandera = (key) =>
     ? `https://flagcdn.com/w40/${equiposMap[key].codigo}.png`
     : null;
 
-// 🟢 GENERAR GRUPOS AGRUPADOS POR FECHA REAL
+// 🟢 GENERAR GRUPOS (CON FECHAS REALES Y ORDENADOS)
 const generarGrupos = () => {
   let id = 1;
   const partidos = [];
 
-  const grupos = 'ABCDEFGHIJKL'.split('');
-  const horarios = ['11:00:00', '14:00:00', '17:00:00', '20:00:00'];
+  const grupos = ['A', 'B', 'C', 'D'];
+  const horarios = ['11:00', '14:00', '17:00', '20:00'];
 
   let fecha = new Date('2026-06-11T11:00:00');
 
-  grupos.forEach((grupo, gIndex) => {
+  grupos.forEach((grupo) => {
     const equipos = [`${grupo}1`, `${grupo}2`, `${grupo}3`, `${grupo}4`];
 
     const cruces = [
@@ -41,8 +56,10 @@ const generarGrupos = () => {
 
     cruces.forEach((c, i) => {
       const f = new Date(fecha);
-      f.setDate(fecha.getDate() + Math.floor(id / 4)); // agrupa por días
-      f.setHours(...horarios[i % 4].split(':'));
+      f.setDate(fecha.getDate() + Math.floor(id / 4));
+
+      const [h, m] = horarios[i % 4].split(':');
+      f.setHours(h, m);
 
       partidos.push({
         id: id++,
@@ -58,7 +75,7 @@ const generarGrupos = () => {
   return partidos;
 };
 
-// 🔴 ELIMINATORIAS EDITABLES (ADMIN)
+// 🔴 ELIMINATORIAS EDITABLES
 const generarFases = () => {
   let id = 1000;
 
@@ -111,23 +128,17 @@ export default function Predicciones() {
   const tabs = ['grupos','16avos','octavos','cuartos','semis','final'];
 
   useEffect(() => {
-    const grupos = generarGrupos();
-    const fases = generarFases();
-    setPartidos([...grupos, ...fases]);
+    setPartidos([...generarGrupos(), ...generarFases()]);
   }, []);
 
-  // 🟢 EDITAR EQUIPOS (ADMIN)
   const editarEquipo = (id, campo, valor) => {
     setPartidos(prev =>
-      prev.map(p =>
-        p.id === id ? { ...p, [campo]: valor } : p
-      )
+      prev.map(p => p.id === id ? { ...p, [campo]: valor } : p)
     );
   };
 
   const onChange = (id, team, value) => {
     const v = parseInt(value);
-
     setPredicciones(prev => ({
       ...prev,
       [id]: { ...prev[id], [team]: isNaN(v) ? '' : v }
@@ -148,39 +159,32 @@ export default function Predicciones() {
   return (
     <div>
 
-      {/* HEADER */}
       <div style={{ background: '#1D9E75', padding: 12 }}>
         <h2 style={{ color: '#fff' }}>Mundial 2026</h2>
       </div>
 
-      {/* TABS */}
       <div style={{ display: 'flex', background: '#0F6E56' }}>
         {tabs.map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
+          <button key={t} onClick={() => setTab(t)}
             style={{
               flex: 1,
               padding: 10,
               color: tab === t ? '#fff' : '#9FE1CB',
               background: 'none',
               border: 'none'
-            }}
-          >
+            }}>
             {t.toUpperCase()}
           </button>
         ))}
       </div>
 
-      {/* LISTA */}
       {Object.entries(porFecha).map(([fecha, lista]) => (
         <div key={fecha}>
           <h3 style={{ padding: 10 }}>{fecha}</h3>
 
           {lista.map(p => (
             <div key={p.id} style={{ border: '1px solid #ccc', margin: 10, padding: 10 }}>
-              
-              {/* 🟢 NOMBRE O INPUT SI ES ELIMINATORIA */}
+
               {tab === 'grupos' ? (
                 <p>
                   <strong>
@@ -189,36 +193,44 @@ export default function Predicciones() {
                 </p>
               ) : (
                 <div style={{ display: 'flex', gap: 5 }}>
-                  <input
-                    placeholder="Local"
+                  <input placeholder="Local"
                     value={p.equipo_local}
-                    onChange={e => editarEquipo(p.id,'equipo_local',e.target.value)}
-                  />
+                    onChange={e => editarEquipo(p.id,'equipo_local',e.target.value)} />
                   <span>vs</span>
-                  <input
-                    placeholder="Visitante"
+                  <input placeholder="Visitante"
                     value={p.equipo_visitante}
-                    onChange={e => editarEquipo(p.id,'equipo_visitante',e.target.value)}
-                  />
+                    onChange={e => editarEquipo(p.id,'equipo_visitante',e.target.value)} />
                 </div>
               )}
 
               <small>{getHora(p.fecha_hora)}</small>
 
-              {/* RESULTADOS */}
+              {/* BANDERAS + RESULTADOS */}
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
-                
-                <input
-                  type="number"
-                  value={predicciones[p.id]?.s1 ?? ''}
-                  onChange={e => onChange(p.id,'s1',e.target.value)}
-                />
 
-                <input
-                  type="number"
-                  value={predicciones[p.id]?.s2 ?? ''}
-                  onChange={e => onChange(p.id,'s2',e.target.value)}
-                />
+                {/* LOCAL */}
+                <div style={{ textAlign: 'center' }}>
+                  {getBandera(p.equipo_local) ? (
+                    <img src={getBandera(p.equipo_local)} style={{ width: 32 }} />
+                  ) : (
+                    <div style={{ width: 32, height: 22, background: '#eee' }} />
+                  )}
+                  <input type="number"
+                    value={predicciones[p.id]?.s1 ?? ''}
+                    onChange={e => onChange(p.id,'s1',e.target.value)} />
+                </div>
+
+                {/* VISITANTE */}
+                <div style={{ textAlign: 'center' }}>
+                  {getBandera(p.equipo_visitante) ? (
+                    <img src={getBandera(p.equipo_visitante)} style={{ width: 32 }} />
+                  ) : (
+                    <div style={{ width: 32, height: 22, background: '#eee' }} />
+                  )}
+                  <input type="number"
+                    value={predicciones[p.id]?.s2 ?? ''}
+                    onChange={e => onChange(p.id,'s2',e.target.value)} />
+                </div>
 
               </div>
 
