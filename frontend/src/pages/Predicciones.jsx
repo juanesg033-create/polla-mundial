@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import NavBottom from '../components/NavBottom';
 
-const partidosGrupos = [
+// 🔵 SOLO PARTIDOS REALES (los que ya viste)
+const partidosReales = [
   {
     id: 1,
     equipo_local: 'México',
@@ -52,16 +53,16 @@ const partidosGrupos = [
   }
 ];
 
-// 🔥 GENERADOR AUTOMÁTICO DE FASES
-const generarEliminacion = () => {
+// 🔴 GENERADOR DE TODO LO DEMÁS (SIN INVENTAR EQUIPOS)
+const generarFases = () => {
   let id = 1000;
   const hoy = new Date().toISOString();
 
   const crear = (fase, cantidad) =>
-    Array.from({ length: cantidad }, (_, i) => ({
+    Array.from({ length: cantidad }, () => ({
       id: id++,
-      equipo_local: `G${i + 1}`,
-      equipo_visitante: `G${i + 2}`,
+      equipo_local: 'Por definir',
+      equipo_visitante: 'Por definir',
       fecha_hora: hoy,
       fase,
       grupo: ''
@@ -76,6 +77,7 @@ const generarEliminacion = () => {
   ];
 };
 
+// 🏳️ BANDERAS (solo si existe país real)
 const banderas = {
   'México': 'mx','Sudáfrica': 'za','Corea del Sur': 'kr','Chequia': 'cz',
   'Canadá': 'ca','Bosnia y Herzegovina': 'ba','Estados Unidos': 'us','Paraguay': 'py',
@@ -84,8 +86,6 @@ const banderas = {
 
 const getBandera = (pais) =>
   banderas[pais] ? `https://flagcdn.com/w40/${banderas[pais]}.png` : null;
-
-const esPlaceholder = (t) => t.startsWith('G');
 
 const getFecha = (f) =>
   new Date(f).toLocaleDateString('es-CO', {
@@ -108,8 +108,8 @@ export default function Predicciones() {
   const tabs = ['grupos','16avos','octavos','cuartos','semis','final'];
 
   useEffect(() => {
-    const eliminacion = generarEliminacion();
-    setPartidos([...partidosGrupos, ...eliminacion]);
+    const fases = generarFases();
+    setPartidos([...partidosReales, ...fases]);
   }, []);
 
   const onChange = (id, team, value) => {
@@ -175,10 +175,11 @@ export default function Predicciones() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
                   
                   <div style={{ textAlign: 'center' }}>
-                    {!esPlaceholder(p.equipo_local) && bl ? (
+                    {bl ? (
                       <img src={bl} style={{ width: 32 }} />
-                    ) : <div style={{ width: 32, height: 22, background: '#eee' }} />}
-                    
+                    ) : (
+                      <div style={{ width: 32, height: 22, background: '#eee' }} />
+                    )}
                     <input
                       type="number"
                       value={predicciones[p.id]?.s1 || 0}
@@ -187,10 +188,11 @@ export default function Predicciones() {
                   </div>
 
                   <div style={{ textAlign: 'center' }}>
-                    {!esPlaceholder(p.equipo_visitante) && bv ? (
+                    {bv ? (
                       <img src={bv} style={{ width: 32 }} />
-                    ) : <div style={{ width: 32, height: 22, background: '#eee' }} />}
-                    
+                    ) : (
+                      <div style={{ width: 32, height: 22, background: '#eee' }} />
+                    )}
                     <input
                       type="number"
                       value={predicciones[p.id]?.s2 || 0}
