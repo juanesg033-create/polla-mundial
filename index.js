@@ -11,8 +11,8 @@ const iniciarScheduler = require('./src/scheduler');
 const app = express();
 
 app.use(cors({
-    origin: ['https://polla-mundial-production.up.railway.app', 'http://localhost:5173'],
-    credentials: true
+      origin: ['https://polla-mundial-production.up.railway.app', 'http://localhost:5173'],
+      credentials: true
 }));
 
 app.use(express.json());
@@ -23,9 +23,9 @@ app.get('/', (req, res) => res.json({ mensaje: 'API Polla Mundial - Sector las B
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, async () => {
-    console.log(`Servidor corriendo en puerto ${PORT}`);
-    await crearTablas();
-    await crearAdmin();
-    // cargarPartidos(); // desactivado - partidos ya cargados en DB
+      console.log(`Servidor corriendo en puerto ${PORT}`);
+      await crearTablas();
+      await crearAdmin();
+      // cargarPartidos(); // desactivado - partidos ya cargados en DB
              iniciarScheduler();
 });
