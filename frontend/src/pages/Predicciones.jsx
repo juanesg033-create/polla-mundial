@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import NavBottom from '../components/NavBottom';
 
-const partidosMock = [
+const partidosGrupos = [
   {
     id: 1,
     equipo_local: 'México',
@@ -52,16 +52,40 @@ const partidosMock = [
   }
 ];
 
+// 🔥 GENERADOR AUTOMÁTICO DE FASES
+const generarEliminacion = () => {
+  let id = 1000;
+  const hoy = new Date().toISOString();
+
+  const crear = (fase, cantidad) =>
+    Array.from({ length: cantidad }, (_, i) => ({
+      id: id++,
+      equipo_local: `G${i + 1}`,
+      equipo_visitante: `G${i + 2}`,
+      fecha_hora: hoy,
+      fase,
+      grupo: ''
+    }));
+
+  return [
+    ...crear('16avos', 16),
+    ...crear('octavos', 8),
+    ...crear('cuartos', 4),
+    ...crear('semis', 2),
+    ...crear('final', 1)
+  ];
+};
+
 const banderas = {
   'México': 'mx','Sudáfrica': 'za','Corea del Sur': 'kr','Chequia': 'cz',
   'Canadá': 'ca','Bosnia y Herzegovina': 'ba','Estados Unidos': 'us','Paraguay': 'py',
   'Catar': 'qa','Suiza': 'ch','Brasil': 'br','Marruecos': 'ma'
 };
 
-const getBandera = (pais) => {
-  const codigo = banderas[pais];
-  return codigo ? `https://flagcdn.com/w40/${codigo}.png` : null;
-};
+const getBandera = (pais) =>
+  banderas[pais] ? `https://flagcdn.com/w40/${banderas[pais]}.png` : null;
+
+const esPlaceholder = (t) => t.startsWith('G');
 
 const getFecha = (f) =>
   new Date(f).toLocaleDateString('es-CO', {
@@ -79,9 +103,13 @@ const getHora = (f) =>
 export default function Predicciones() {
   const [partidos, setPartidos] = useState([]);
   const [predicciones, setPredicciones] = useState({});
+  const [tab, setTab] = useState('grupos');
+
+  const tabs = ['grupos','16avos','octavos','cuartos','semis','final'];
 
   useEffect(() => {
-    setPartidos(partidosMock);
+    const eliminacion = generarEliminacion();
+    setPartidos([...partidosGrupos, ...eliminacion]);
   }, []);
 
   const onChange = (id, team, value) => {
@@ -93,7 +121,9 @@ export default function Predicciones() {
     }));
   };
 
-  const porFecha = partidos.reduce((acc, p) => {
+  const filtrados = partidos.filter(p => p.fase === tab);
+
+  const porFecha = filtrados.reduce((acc, p) => {
     const key = getFecha(p.fecha_hora);
     if (!acc[key]) acc[key] = [];
     acc[key].push(p);
@@ -105,17 +135,39 @@ export default function Predicciones() {
 
       {/* HEADER */}
       <div style={{ background: '#1D9E75', padding: 12 }}>
-        <h2 style={{ color: '#fff' }}>Partidos definidos - Mundial 2026</h2>
+        <h2 style={{ color: '#fff' }}>Mundial 2026</h2>
+      </div>
+
+      {/* TABS */}
+      <div style={{ display: 'flex', background: '#0F6E56' }}>
+        {tabs.map(t => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            style={{
+              flex: 1,
+              padding: 10,
+              color: tab === t ? '#fff' : '#9FE1CB',
+              background: 'none',
+              border: 'none'
+            }}
+          >
+            {t}
+          </button>
+        ))}
       </div>
 
       {/* LISTA */}
-      <div>
-        {Object.entries(porFecha).map(([fecha, lista]) => (
-          <div key={fecha}>
-            <h3 style={{ padding: '8px 12px' }}>{fecha}</h3>
+      {Object.entries(porFecha).map(([fecha, lista]) => (
+        <div key={fecha}>
+          <h3 style={{ padding: 10 }}>{fecha}</h3>
 
-            {lista.map(p => (
-              <div key={p.id} style={{ border: '1px solid #ddd', margin: 10, padding: 12 }}>
+          {lista.map(p => {
+            const bl = getBandera(p.equipo_local);
+            const bv = getBandera(p.equipo_visitante);
+
+            return (
+              <div key={p.id} style={{ border: '1px solid #ccc', margin: 10, padding: 10 }}>
                 
                 <p><strong>{p.equipo_local} vs {p.equipo_visitante}</strong></p>
                 <small>{getHora(p.fecha_hora)}</small>
@@ -123,7 +175,10 @@ export default function Predicciones() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
                   
                   <div style={{ textAlign: 'center' }}>
-                    <img src={getBandera(p.equipo_local)} alt="" style={{ width: 32 }} />
+                    {!esPlaceholder(p.equipo_local) && bl ? (
+                      <img src={bl} style={{ width: 32 }} />
+                    ) : <div style={{ width: 32, height: 22, background: '#eee' }} />}
+                    
                     <input
                       type="number"
                       value={predicciones[p.id]?.s1 || 0}
@@ -132,7 +187,10 @@ export default function Predicciones() {
                   </div>
 
                   <div style={{ textAlign: 'center' }}>
-                    <img src={getBandera(p.equipo_visitante)} alt="" style={{ width: 32 }} />
+                    {!esPlaceholder(p.equipo_visitante) && bv ? (
+                      <img src={bv} style={{ width: 32 }} />
+                    ) : <div style={{ width: 32, height: 22, background: '#eee' }} />}
+                    
                     <input
                       type="number"
                       value={predicciones[p.id]?.s2 || 0}
@@ -143,10 +201,10 @@ export default function Predicciones() {
                 </div>
 
               </div>
-            ))}
-          </div>
-        ))}
-      </div>
+            );
+          })}
+        </div>
+      ))}
 
       <NavBottom />
     </div>
