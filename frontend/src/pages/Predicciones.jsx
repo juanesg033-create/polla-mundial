@@ -1,49 +1,51 @@
 import { useEffect, useState } from 'react';
 import NavBottom from '../components/NavBottom';
 
-// 🟢 MAPA COMPLETO (puedes editarlo luego)
-const equiposMap = {
-  A1: { nombre: 'México', codigo: 'mx' },
-  A2: { nombre: 'Sudáfrica', codigo: 'za' },
-  A3: { nombre: 'Corea del Sur', codigo: 'kr' },
-  A4: { nombre: 'Chequia', codigo: 'cz' },
-
-  B1: { nombre: 'Canadá', codigo: 'ca' },
-  B2: { nombre: 'Bosnia', codigo: 'ba' },
-  B3: { nombre: 'Catar', codigo: 'qa' },
-  B4: { nombre: 'Suiza', codigo: 'ch' },
-
-  C1: { nombre: 'Brasil', codigo: 'br' },
-  C2: { nombre: 'Marruecos', codigo: 'ma' },
-  C3: { nombre: 'Japón', codigo: 'jp' },
-  C4: { nombre: 'Escocia', codigo: 'gb' },
-
-  D1: { nombre: 'Estados Unidos', codigo: 'us' },
-  D2: { nombre: 'Paraguay', codigo: 'py' },
-  D3: { nombre: 'Australia', codigo: 'au' },
-  D4: { nombre: 'Turquía', codigo: 'tr' }
+// 🟢 MAPA DE BANDERAS (según tu Excel)
+const banderas = {
+  'México':'mx','Sudáfrica':'za','Corea del Sur':'kr','Chequia':'cz',
+  'Canadá':'ca','Bosnia':'ba','Catar':'qa','Suiza':'ch',
+  'Brasil':'br','Marruecos':'ma','Japón':'jp','Escocia':'gb',
+  'EEUU':'us','Paraguay':'py','Australia':'au','Turquía':'tr',
+  'Alemania':'de','Ecuador':'ec','Nigeria':'ng','Polonia':'pl',
+  'Francia':'fr','Chile':'cl','Dinamarca':'dk','Irán':'ir',
+  'Argentina':'ar','Perú':'pe','Serbia':'rs','Corea Norte':'kp',
+  'España':'es','Colombia':'co','Egipto':'eg','Suecia':'se',
+  'Inglaterra':'gb','Uruguay':'uy','Ghana':'gh','Canadá B':'ca',
+  'Portugal':'pt','Bolivia':'bo','Croacia':'hr','Japón B':'jp',
+  'Italia':'it','Venezuela':'ve','Senegal':'sn','Australia B':'au',
+  'Países Bajos':'nl','Panamá':'pa','Costa Rica':'cr','Qatar B':'qa'
 };
 
-// 🔹 HELPERS
-const getNombre = (key) => equiposMap[key]?.nombre || key;
-
-const getBandera = (key) =>
-  equiposMap[key]?.codigo
-    ? `https://flagcdn.com/w40/${equiposMap[key].codigo}.png`
+const getBandera = (pais) =>
+  banderas[pais]
+    ? `https://flagcdn.com/w40/${banderas[pais]}.png`
     : null;
 
-// 🟢 GENERAR GRUPOS (CON FECHAS REALES Y ORDENADOS)
+// 🟢 GENERAR PARTIDOS DESDE EL EXCEL (MISMA LÓGICA)
 const generarGrupos = () => {
   let id = 1;
   const partidos = [];
 
-  const grupos = ['A', 'B', 'C', 'D'];
-  const horarios = ['11:00', '14:00', '17:00', '20:00'];
+  const grupos = {
+    A: ['México','Sudáfrica','Corea del Sur','Chequia'],
+    B: ['Canadá','Bosnia','Catar','Suiza'],
+    C: ['Brasil','Marruecos','Japón','Escocia'],
+    D: ['EEUU','Paraguay','Australia','Turquía'],
+    E: ['Alemania','Ecuador','Nigeria','Polonia'],
+    F: ['Francia','Chile','Dinamarca','Irán'],
+    G: ['Argentina','Perú','Serbia','Corea Norte'],
+    H: ['España','Colombia','Egipto','Suecia'],
+    I: ['Inglaterra','Uruguay','Ghana','Canadá B'],
+    J: ['Portugal','Bolivia','Croacia','Japón B'],
+    K: ['Italia','Venezuela','Senegal','Australia B'],
+    L: ['Países Bajos','Panamá','Costa Rica','Qatar B']
+  };
 
+  const horarios = [11,14,17,20];
   let fecha = new Date('2026-06-11T11:00:00');
 
-  grupos.forEach((grupo) => {
-    const equipos = [`${grupo}1`, `${grupo}2`, `${grupo}3`, `${grupo}4`];
+  Object.entries(grupos).forEach(([grupo, equipos]) => {
 
     const cruces = [
       [equipos[0], equipos[1]],
@@ -57,9 +59,7 @@ const generarGrupos = () => {
     cruces.forEach((c, i) => {
       const f = new Date(fecha);
       f.setDate(fecha.getDate() + Math.floor(id / 4));
-
-      const [h, m] = horarios[i % 4].split(':');
-      f.setHours(h, m);
+      f.setHours(horarios[i % 4], 0);
 
       partidos.push({
         id: id++,
@@ -106,7 +106,7 @@ const generarFases = () => {
   ];
 };
 
-// 🔹 FORMATO
+// 🔹 FORMATOS
 const getFecha = (f) =>
   new Date(f).toLocaleDateString('es-CO', {
     weekday: 'long',
@@ -186,47 +186,30 @@ export default function Predicciones() {
             <div key={p.id} style={{ border: '1px solid #ccc', margin: 10, padding: 10 }}>
 
               {tab === 'grupos' ? (
-                <p>
-                  <strong>
-                    {getNombre(p.equipo_local)} vs {getNombre(p.equipo_visitante)}
-                  </strong>
-                </p>
+                <p><strong>{p.equipo_local} vs {p.equipo_visitante}</strong></p>
               ) : (
                 <div style={{ display: 'flex', gap: 5 }}>
-                  <input placeholder="Local"
-                    value={p.equipo_local}
+                  <input value={p.equipo_local}
                     onChange={e => editarEquipo(p.id,'equipo_local',e.target.value)} />
                   <span>vs</span>
-                  <input placeholder="Visitante"
-                    value={p.equipo_visitante}
+                  <input value={p.equipo_visitante}
                     onChange={e => editarEquipo(p.id,'equipo_visitante',e.target.value)} />
                 </div>
               )}
 
               <small>{getHora(p.fecha_hora)}</small>
 
-              {/* BANDERAS + RESULTADOS */}
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
 
-                {/* LOCAL */}
-                <div style={{ textAlign: 'center' }}>
-                  {getBandera(p.equipo_local) ? (
-                    <img src={getBandera(p.equipo_local)} style={{ width: 32 }} />
-                  ) : (
-                    <div style={{ width: 32, height: 22, background: '#eee' }} />
-                  )}
+                <div>
+                  {getBandera(p.equipo_local) && <img src={getBandera(p.equipo_local)} width={32} />}
                   <input type="number"
                     value={predicciones[p.id]?.s1 ?? ''}
                     onChange={e => onChange(p.id,'s1',e.target.value)} />
                 </div>
 
-                {/* VISITANTE */}
-                <div style={{ textAlign: 'center' }}>
-                  {getBandera(p.equipo_visitante) ? (
-                    <img src={getBandera(p.equipo_visitante)} style={{ width: 32 }} />
-                  ) : (
-                    <div style={{ width: 32, height: 22, background: '#eee' }} />
-                  )}
+                <div>
+                  {getBandera(p.equipo_visitante) && <img src={getBandera(p.equipo_visitante)} width={32} />}
                   <input type="number"
                     value={predicciones[p.id]?.s2 ?? ''}
                     onChange={e => onChange(p.id,'s2',e.target.value)} />
