@@ -130,7 +130,7 @@ const formatHora = (f) =>
   new Date(f).toLocaleTimeString('es-CO', { hour:'2-digit', minute:'2-digit' });
 
 export default function Predicciones() {
-  const [partidosDB, setPartidosDB] = useState({});
+  const [partidosDB, setPartidosDB] = useState([]);
   const [predicciones, setPredicciones] = useState({});
   const [guardados, setGuardados] = useState({});
   const [guardando, setGuardando] = useState({});
@@ -141,14 +141,7 @@ export default function Predicciones() {
 
   useEffect(() => {
     api.getPartidos().then(data => {
-      if (Array.isArray(data)) {
-        const mapa = {};
-        data.forEach(p => {
-          const key = `${p.equipo_local.trim()}|${p.equipo_visitante.trim()}`;
-          mapa[key] = p.id;
-        });
-        setPartidosDB(mapa);
-      }
+      if (Array.isArray(data)) setPartidosDB(data);
     });
     api.misPredicciones().then(data => {
       if (Array.isArray(data)) {
@@ -164,25 +157,26 @@ export default function Predicciones() {
     });
   }, []);
 
-  const onChange = (id, team, value) => {
+  // Buscar el UUID real del partido en la DB por nombre de equipos
+  const getPartidoReal = (p) =>
+    partidosDB.find(db =>
+      db.equipo_local.trim() === p.equipo_local.trim() &&
+      db.equipo_visitante.trim() === p.equipo_visitante.trim()
+    );
+
+  const onChange = (realId, team, value) => {
     const v = Math.max(0, Math.min(99, parseInt(value) || 0));
-    setPredicciones(prev => ({ ...prev, [id]: { ...prev[id], [team]: v } }));
-    setGuardados(prev => ({ ...prev, [id]: false }));
+    setPredicciones(prev => ({ ...prev, [realId]: { ...prev[realId], [team]: v } }));
+    setGuardados(prev => ({ ...prev, [realId]: false }));
   };
 
-  const guardar = async (p) => {
-    const key = `${p.equipo_local}|${p.equipo_visitante}`;
-    const partidoId = partidosDB[key];
-    if (!partidoId) {
-      alert(`Partido no encontrado: ${p.equipo_local} vs ${p.equipo_visitante}`);
-      return;
-    }
-    const pred = predicciones[p.id] || { s1: 0, s2: 0 };
-    setGuardando(prev => ({ ...prev, [p.id]: true }));
-    const res = await api.guardarPrediccion(partidoId, pred.s1, pred.s2);
-    setGuardando(prev => ({ ...prev, [p.id]: false }));
+  const guardar = async (p, realId) => {
+    const pred = predicciones[realId] || { s1: 0, s2: 0 };
+    setGuardando(prev => ({ ...prev, [realId]: true }));
+    const res = await api.guardarPrediccion(realId, pred.s1, pred.s2);
+    setGuardando(prev => ({ ...prev, [realId]: false }));
     if (res.error) { alert('Error: ' + res.error); return; }
-    setGuardados(prev => ({ ...prev, [p.id]: true }));
+    setGuardados(prev => ({ ...prev, [realId]: true }));
   };
 
   const filtrados = todosPartidos
@@ -231,9 +225,11 @@ export default function Predicciones() {
 
             {lista.map(p => {
               const esPorDefinir = p.equipo_local === 'Por definir';
-              const pred = predicciones[p.id] || { s1: 0, s2: 0 };
-              const yaGuardado = guardados[p.id];
-              const cargando = guardando[p.id];
+              const partidoReal = getPartidoReal(p);
+              const realId = partidoReal?.id;
+              const pred = predicciones[realId] || { s1: 0, s2: 0 };
+              const yaGuardado = !!guardados[realId];
+              const cargando = !!guardando[realId];
               const bl = getBandera(p.equipo_local);
               const bv = getBandera(p.equipo_visitante);
 
@@ -254,16 +250,20 @@ export default function Predicciones() {
                       <span style={{ fontSize:12, fontWeight:600 }}>{p.equipo_local}</span>
                     </div>
                     <div style={{ display:'flex', alignItems:'center', gap:6, padding:'0 10px' }}>
-                      <input type="number" min="0" max="99" value={pred.s1} disabled={esPorDefinir}
-                        onChange={e => onChange(p.id, 's1', e.target.value)}
+                      <input type="number" min="0" max="99"
+                        value={pred.s1}
+                        disabled={esPorDefinir}
+                        onChange={e => realId && onChange(realId, 's1', e.target.value)}
                         style={{ width:40, height:40, textAlign:'center', fontSize:18, fontWeight:700,
                           background: esPorDefinir ? '#0d2137' : '#0e3d2a',
                           color: esPorDefinir ? '#333' : '#3ddc97',
                           border: '2px solid ' + (esPorDefinir ? '#1a4060' : yaGuardado ? '#3ddc97' : '#2a6a50'),
                           borderRadius:8, outline:'none' }} />
                       <span style={{ color:'#555', fontWeight:700 }}>—</span>
-                      <input type="number" min="0" max="99" value={pred.s2} disabled={esPorDefinir}
-                        onChange={e => onChange(p.id, 's2', e.target.value)}
+                      <input type="number" min="0" max="99"
+                        value={pred.s2}
+                        disabled={esPorDefinir}
+                        onChange={e => realId && onChange(realId, 's2', e.target.value)}
                         style={{ width:40, height:40, textAlign:'center', fontSize:18, fontWeight:700,
                           background: esPorDefinir ? '#0d2137' : '#0e3d2a',
                           color: esPorDefinir ? '#333' : '#3ddc97',
@@ -277,15 +277,18 @@ export default function Predicciones() {
                   </div>
 
                   {!esPorDefinir && (
-                    <button onClick={() => guardar(p)} disabled={cargando} style={{
-                      width:'100%', marginTop:10, padding:'10px',
-                      background: yaGuardado ? '#0e3d2a' : '#1a7a55',
-                      color: yaGuardado ? '#3ddc97' : '#fff',
-                      fontWeight:600, fontSize:12,
-                      border: yaGuardado ? '1px solid #3ddc97' : 'none',
-                      borderRadius:8, cursor: cargando ? 'wait' : 'pointer',
-                      opacity: cargando ? 0.6 : 1,
-                    }}>
+                    <button
+                      onClick={() => realId && guardar(p, realId)}
+                      disabled={cargando || !realId}
+                      style={{
+                        width:'100%', marginTop:10, padding:'10px',
+                        background: yaGuardado ? '#0e3d2a' : '#1a7a55',
+                        color: yaGuardado ? '#3ddc97' : '#fff',
+                        fontWeight:600, fontSize:12,
+                        border: yaGuardado ? '1px solid #3ddc97' : 'none',
+                        borderRadius:8, cursor: (cargando || !realId) ? 'not-allowed' : 'pointer',
+                        opacity: (cargando || !realId) ? 0.6 : 1,
+                      }}>
                       {cargando ? 'Guardando...' : yaGuardado ? '✓ Guardado' : 'Guardar predicción'}
                     </button>
                   )}
