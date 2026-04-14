@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
 import NavBottom from '../components/NavBottom';
 
-// 🏳️ BANDERAS (puedes ampliarlo luego)
+// 🏳️ BANDERAS
 const banderas = {
   'México': 'mx','Sudáfrica': 'za','Corea del Sur': 'kr','Chequia': 'cz',
   'Canadá': 'ca','Bosnia y Herzegovina': 'ba','Estados Unidos': 'us','Paraguay': 'py',
@@ -12,20 +12,32 @@ const banderas = {
 const getBandera = (pais) =>
   banderas[pais] ? `https://flagcdn.com/w40/${banderas[pais]}.png` : null;
 
-const formatFechaTitulo = (fechaISO) => {
-  return new Date(fechaISO).toLocaleDateString('es-CO', {
+// 🔥 CONVERTIR FECHA EXCEL (CLAVE)
+const excelDateToJS = (excelDate) => {
+  if (!excelDate) return new Date();
+
+  // Si es número (formato Excel)
+  if (typeof excelDate === 'number') {
+    return new Date((excelDate - 25569) * 86400 * 1000);
+  }
+
+  // Si ya es string
+  return new Date(excelDate);
+};
+
+// 🔥 FORMATEAR FECHA
+const formatFechaTitulo = (fechaISO) =>
+  new Date(fechaISO).toLocaleDateString('es-CO', {
     weekday: 'long',
     day: 'numeric',
     month: 'long'
   });
-};
 
-const formatHora = (fechaISO) => {
-  return new Date(fechaISO).toLocaleTimeString('es-CO', {
+const formatHora = (fechaISO) =>
+  new Date(fechaISO).toLocaleTimeString('es-CO', {
     hour: '2-digit',
     minute: '2-digit'
   });
-};
 
 export default function Predicciones() {
   const [partidos, setPartidos] = useState([]);
@@ -35,39 +47,47 @@ export default function Predicciones() {
     cargarExcel();
   }, []);
 
-  // 🔥 LEER EXCEL COMPLETO
+  // ✅ CARGA SEGURA DEL EXCEL
   const cargarExcel = async () => {
-    const res = await fetch('/mundial_2026_con_equipos.xlsx'); // 👈 pon tu archivo en /public
-    const data = await res.arrayBuffer();
+    try {
+      const res = await fetch('/mundial_2026_con_equipos.xlsx');
+      const data = await res.arrayBuffer();
 
-    const workbook = XLSX.read(data, { type: 'array' });
-    const hoja = workbook.Sheets[workbook.SheetNames[0]];
-    const json = XLSX.utils.sheet_to_json(hoja);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const hoja = workbook.Sheets[workbook.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(hoja);
 
-    // ⚠️ AJUSTA ESTOS NOMBRES SEGÚN TU EXCEL
-    const partidosFormateados = json.map((p, i) => ({
-      id: i + 1,
-      equipo_local: p.Local,
-      equipo_visitante: p.Visitante,
-      fecha_hora: convertirFecha(p.Fecha, p.Hora),
-      fase: 'grupos'
-    }));
+      const partidosFormateados = json.map((p, i) => {
+        const fechaBase = excelDateToJS(p.Fecha);
 
-    setPartidos(partidosFormateados);
-  };
+        // ⏰ agregar hora si existe
+        if (p.Hora) {
+          let horas = 0, minutos = 0;
 
-  // 🔥 CONVERTIR FECHA + HORA DEL EXCEL
-  const convertirFecha = (fecha, hora) => {
-    if (!fecha) return new Date().toISOString();
+          if (typeof p.Hora === 'string') {
+            const partes = p.Hora.split(':');
+            horas = parseInt(partes[0]) || 0;
+            minutos = parseInt(partes[1]) || 0;
+          }
 
-    const f = new Date(fecha);
-    if (hora) {
-      const [h, m] = hora.split(':');
-      f.setHours(h);
-      f.setMinutes(m);
+          fechaBase.setHours(horas);
+          fechaBase.setMinutes(minutos);
+        }
+
+        return {
+          id: i + 1,
+          equipo_local: p.Local || 'Por definir',
+          equipo_visitante: p.Visitante || 'Por definir',
+          fecha_hora: fechaBase.toISOString(),
+          fase: 'grupos'
+        };
+      });
+
+      setPartidos(partidosFormateados);
+
+    } catch (error) {
+      console.error('Error cargando Excel:', error);
     }
-
-    return f.toISOString();
   };
 
   const onChange = (id, team, value) => {
@@ -78,11 +98,12 @@ export default function Predicciones() {
     }));
   };
 
-  // 🔥 ORDENAR + AGRUPAR POR FECHA REAL
+  // 🔥 ORDENAR
   const ordenados = [...partidos].sort(
     (a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora)
   );
 
+  // 🔥 AGRUPAR POR FECHA REAL
   const porFecha = ordenados.reduce((acc, p) => {
     const key = p.fecha_hora.split('T')[0];
     if (!acc[key]) acc[key] = [];
@@ -98,7 +119,7 @@ export default function Predicciones() {
         <h2>Mundial 2026</h2>
       </div>
 
-      {/* LISTA POR FECHAS */}
+      {/* LISTA */}
       {Object.entries(porFecha).map(([fecha, lista]) => (
         <div key={fecha}>
 
@@ -122,14 +143,17 @@ export default function Predicciones() {
 
                 <div style={{
                   display: 'flex',
-                  alignItems: 'center',
                   justifyContent: 'space-between',
+                  alignItems: 'center',
                   marginTop: 10
                 }}>
 
                   {/* LOCAL */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {bl && <img src={bl} style={{ width: 32 }} />}
+                    {bl
+                      ? <img src={bl} style={{ width: 32 }} />
+                      : <div style={{ width: 32, height: 22, background: '#ccc' }} />
+                    }
                     <span>{p.equipo_local}</span>
                   </div>
 
@@ -153,7 +177,10 @@ export default function Predicciones() {
                   {/* VISITANTE */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span>{p.equipo_visitante}</span>
-                    {bv && <img src={bv} style={{ width: 32 }} />}
+                    {bv
+                      ? <img src={bv} style={{ width: 32 }} />
+                      : <div style={{ width: 32, height: 22, background: '#ccc' }} />
+                    }
                   </div>
 
                 </div>
