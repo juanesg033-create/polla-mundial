@@ -1,12 +1,43 @@
 import { useEffect, useState } from 'react';
 import NavBottom from '../components/NavBottom';
 
-// 🟢 FASE DE GRUPOS (estructura real FIFA)
+// 🟢 MAPA DE EQUIPOS (puedes editarlo cuando salgan los grupos reales)
+const equiposMap = {
+  A1: { nombre: 'México', codigo: 'mx' },
+  A2: { nombre: 'Sudáfrica', codigo: 'za' },
+  A3: { nombre: 'Corea del Sur', codigo: 'kr' },
+  A4: { nombre: 'Chequia', codigo: 'cz' },
+
+  B1: { nombre: 'Canadá', codigo: 'ca' },
+  B2: { nombre: 'Bosnia', codigo: 'ba' },
+  B3: { nombre: 'Catar', codigo: 'qa' },
+  B4: { nombre: 'Suiza', codigo: 'ch' },
+
+  C1: { nombre: 'Brasil', codigo: 'br' },
+  C2: { nombre: 'Marruecos', codigo: 'ma' },
+  C3: { nombre: 'Japón', codigo: 'jp' },
+  C4: { nombre: 'Escocia', codigo: 'gb' },
+
+  D1: { nombre: 'Estados Unidos', codigo: 'us' },
+  D2: { nombre: 'Paraguay', codigo: 'py' },
+  D3: { nombre: 'Australia', codigo: 'au' },
+  D4: { nombre: 'Turquía', codigo: 'tr' }
+};
+
+// 🔹 HELPERS
+const getNombre = (key) => equiposMap[key]?.nombre || key;
+
+const getBandera = (key) =>
+  equiposMap[key]?.codigo
+    ? `https://flagcdn.com/w40/${equiposMap[key].codigo}.png`
+    : null;
+
+// 🟢 GENERAR GRUPOS (estructura FIFA real)
 const generarGrupos = () => {
   let id = 1;
   const partidos = [];
 
-  const grupos = 'ABCDEFGHIJKL'.split('');
+  const grupos = ['A', 'B', 'C', 'D'];
   const horarios = ['11:00:00', '14:00:00', '17:00:00', '20:00:00'];
 
   let fechaBase = new Date('2026-06-11T11:00:00');
@@ -44,7 +75,7 @@ const generarGrupos = () => {
   return partidos;
 };
 
-// 🔴 ELIMINATORIAS (fechas reales)
+// 🔴 ELIMINATORIAS
 const generarFases = () => {
   let id = 1000;
 
@@ -57,7 +88,7 @@ const generarFases = () => {
   };
 
   const crear = (fase, cantidad) =>
-    Array.from({ length: cantidad }, (_, i) => ({
+    Array.from({ length: cantidad }, () => ({
       id: id++,
       equipo_local: 'Por definir',
       equipo_visitante: 'Por definir',
@@ -75,6 +106,7 @@ const generarFases = () => {
   ];
 };
 
+// 🔹 FORMATO FECHA
 const getFecha = (f) =>
   new Date(f).toLocaleDateString('es-CO', {
     weekday: 'long',
@@ -156,22 +188,45 @@ export default function Predicciones() {
           {lista.map(p => (
             <div key={p.id} style={{ border: '1px solid #ccc', margin: 10, padding: 10 }}>
               
-              <p><strong>{p.equipo_local} vs {p.equipo_visitante}</strong></p>
+              <p>
+                <strong>
+                  {getNombre(p.equipo_local)} vs {getNombre(p.equipo_visitante)}
+                </strong>
+              </p>
+
               <small>{getHora(p.fecha_hora)}</small>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
                 
-                <input
-                  type="number"
-                  value={predicciones[p.id]?.s1 ?? ''}
-                  onChange={e => onChange(p.id,'s1',e.target.value)}
-                />
+                {/* LOCAL */}
+                <div style={{ textAlign: 'center' }}>
+                  {getBandera(p.equipo_local) ? (
+                    <img src={getBandera(p.equipo_local)} style={{ width: 32 }} />
+                  ) : (
+                    <div style={{ width: 32, height: 22, background: '#eee' }} />
+                  )}
 
-                <input
-                  type="number"
-                  value={predicciones[p.id]?.s2 ?? ''}
-                  onChange={e => onChange(p.id,'s2',e.target.value)}
-                />
+                  <input
+                    type="number"
+                    value={predicciones[p.id]?.s1 ?? ''}
+                    onChange={e => onChange(p.id,'s1',e.target.value)}
+                  />
+                </div>
+
+                {/* VISITANTE */}
+                <div style={{ textAlign: 'center' }}>
+                  {getBandera(p.equipo_visitante) ? (
+                    <img src={getBandera(p.equipo_visitante)} style={{ width: 32 }} />
+                  ) : (
+                    <div style={{ width: 32, height: 22, background: '#eee' }} />
+                  )}
+
+                  <input
+                    type="number"
+                    value={predicciones[p.id]?.s2 ?? ''}
+                    onChange={e => onChange(p.id,'s2',e.target.value)}
+                  />
+                </div>
 
               </div>
 
