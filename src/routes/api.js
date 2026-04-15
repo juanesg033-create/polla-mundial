@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const { verificarToken, soloAdmin } = require('../middleware/auth');
 const { listarUsuarios, crearUsuario, toggleUsuario, eliminarUsuario } = require('../controllers/usuariosController');
-const { listarPartidos, crearPartido, ingresarResultado } = require('../controllers/partidosController');
+const { listarPartidos, crearPartido, ingresarResultado, actualizarEquipos } = require('../controllers/partidosController');
 const { misPredicciones, guardarPrediccion } = require('../controllers/prediccionesController');
 const { clasificacion, obtenerPozo, actualizarPozo, misEspeciales, guardarEspeciales } = require('../controllers/clasificacionController');
 const seedPartidos = require('../db/seed-partidos');
@@ -9,6 +9,7 @@ const seedPartidos = require('../db/seed-partidos');
 router.get('/usuarios', verificarToken, soloAdmin, listarUsuarios);
 router.post('/usuarios', verificarToken, soloAdmin, crearUsuario);
 router.put('/usuarios/:id/toggle', verificarToken, soloAdmin, toggleUsuario);
+router.put('/partidos/:id/equipos', verificarToken, soloAdmin, actualizarEquipos);
 router.delete('/usuarios/:id', verificarToken, soloAdmin, eliminarUsuario);
 
 router.get('/partidos', listarPartidos);
