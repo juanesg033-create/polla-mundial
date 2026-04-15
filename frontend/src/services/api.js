@@ -20,4 +20,4 @@ export const api = {
   toggleUsuario: (id) => fetch(`${BASE}/usuarios/${id}/toggle`, { method: 'PUT', headers: h() }).then(r => r.json()),
   eliminarUsuario: (id) => fetch(`${BASE}/usuarios/${id}`, { method: 'DELETE', headers: h() }).then(r => r.json()),
   actualizarEquipos: (id, equipo_local, equipo_visitante) => fetch(`${BASE}/partidos/${id}/equipos`, { method: 'PUT', headers: h(), body: JSON.stringify({ equipo_local, equipo_visitante }) }).then(r => r.json()),
-};};
+};
