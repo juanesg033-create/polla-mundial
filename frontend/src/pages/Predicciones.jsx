@@ -247,4 +247,25 @@ export default function Predicciones() {
                   </div>
 
                   {!porDefinir && (
-                    <button onClick={()=>guardar(p)} disabled={car
+                    <button onClick={()=>guardar(p)} disabled={cargando} style={{
+                      width:'100%',marginTop:10,padding:'10px',
+                      background:yaGuardado?'#0e3d2a':'#1a7a55',
+                      color:yaGuardado?'#3ddc97':'#fff',
+                      fontWeight:600,fontSize:12,
+                      border:yaGuardado?'1px solid #3ddc97':'none',
+                      borderRadius:8,cursor:cargando?'wait':'pointer',
+                      opacity:cargando?0.6:1,
+                    }}>
+                      {cargando?'Guardando...':yaGuardado?'✓ Guardado':'Guardar predicción'}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      <NavBottom />
+    </div>
+  );
+}
