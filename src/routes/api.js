@@ -4,6 +4,7 @@ const { listarUsuarios, crearUsuario, toggleUsuario, eliminarUsuario } = require
 const { listarPartidos, crearPartido, ingresarResultado } = require('../controllers/partidosController');
 const { misPredicciones, guardarPrediccion } = require('../controllers/prediccionesController');
 const { clasificacion, obtenerPozo, actualizarPozo, misEspeciales, guardarEspeciales } = require('../controllers/clasificacionController');
+const seedPartidos = require('../db/seed-partidos');
 
 router.get('/usuarios', verificarToken, soloAdmin, listarUsuarios);
 router.post('/usuarios', verificarToken, soloAdmin, crearUsuario);
@@ -12,6 +13,14 @@ router.delete('/usuarios/:id', verificarToken, soloAdmin, eliminarUsuario);
 
 router.get('/partidos', listarPartidos);
 router.post('/partidos', verificarToken, soloAdmin, crearPartido);
+router.post('/admin/seed', verificarToken, soloAdmin, async (req, res) => {
+  try {
+    const result = await seedPartidos();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 router.put('/partidos/:id/resultado', verificarToken, soloAdmin, ingresarResultado);
 
 router.get('/predicciones/mis', verificarToken, misPredicciones);
