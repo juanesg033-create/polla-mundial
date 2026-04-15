@@ -42,4 +42,18 @@ const ingresarResultado = async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Error en el servidor' }); }
 };
 
-module.exports = { listarPartidos, crearPartido, ingresarResultado };
+const actualizarEquipos = async (req, res) => {
+  const { id } = req.params;
+  const { equipo_local, equipo_visitante } = req.body;
+  try {
+    const result = await pool.query(
+      `UPDATE partidos SET equipo_local = $1, equipo_visitante = $2 WHERE id = $3 RETURNING *`,
+      [equipo_local, equipo_visitante, id]
+    );
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Partido no encontrado' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+module.exports = { listarPartidos, crearPartido, ingresarResultado, actualizarEquipos };
