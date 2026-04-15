@@ -2,84 +2,79 @@ import { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import NavBottom from '../components/NavBottom';
 
-const PARTIDOS = [
-  { id:1,  local:'México',          visita:'Sudáfrica',          grupo:'Grupo A', fecha:'2026-06-11T14:00:00', fase:'grupos' },
-  { id:2,  local:'Corea del Sur',   visita:'Rep. Checa',         grupo:'Grupo A', fecha:'2026-06-11T21:00:00', fase:'grupos' },
-  { id:3,  local:'Rep. Checa',      visita:'Sudáfrica',          grupo:'Grupo A', fecha:'2026-06-18T11:00:00', fase:'grupos' },
-  { id:4,  local:'México',          visita:'Corea del Sur',      grupo:'Grupo A', fecha:'2026-06-18T20:00:00', fase:'grupos' },
-  { id:5,  local:'Rep. Checa',      visita:'México',             grupo:'Grupo A', fecha:'2026-06-24T20:00:00', fase:'grupos' },
-  { id:6,  local:'Sudáfrica',       visita:'Corea del Sur',      grupo:'Grupo A', fecha:'2026-06-24T20:00:01', fase:'grupos' },
-  { id:7,  local:'Canadá',          visita:'Bosnia y Herzegovina',grupo:'Grupo B', fecha:'2026-06-12T14:00:00', fase:'grupos' },
-  { id:8,  local:'Qatar',           visita:'Suiza',              grupo:'Grupo B', fecha:'2026-06-13T14:00:00', fase:'grupos' },
-  { id:9,  local:'Suiza',           visita:'Bosnia y Herzegovina',grupo:'Grupo B', fecha:'2026-06-18T14:00:00', fase:'grupos' },
-  { id:10, local:'Canadá',          visita:'Qatar',              grupo:'Grupo B', fecha:'2026-06-18T17:00:00', fase:'grupos' },
-  { id:11, local:'Suiza',           visita:'Canadá',             grupo:'Grupo B', fecha:'2026-06-24T14:00:00', fase:'grupos' },
-  { id:12, local:'Bosnia y Herzegovina', visita:'Qatar',         grupo:'Grupo B', fecha:'2026-06-24T14:00:01', fase:'grupos' },
-  { id:13, local:'Brasil',          visita:'Marruecos',          grupo:'Grupo C', fecha:'2026-06-13T17:00:00', fase:'grupos' },
-  { id:14, local:'Haití',           visita:'Escocia',            grupo:'Grupo C', fecha:'2026-06-13T20:00:00', fase:'grupos' },
-  { id:15, local:'Escocia',         visita:'Marruecos',          grupo:'Grupo C', fecha:'2026-06-19T17:00:00', fase:'grupos' },
-  { id:16, local:'Brasil',          visita:'Haití',              grupo:'Grupo C', fecha:'2026-06-19T20:00:00', fase:'grupos' },
-  { id:17, local:'Brasil',          visita:'Escocia',            grupo:'Grupo C', fecha:'2026-06-24T17:00:00', fase:'grupos' },
-  { id:18, local:'Marruecos',       visita:'Haití',              grupo:'Grupo C', fecha:'2026-06-24T17:00:01', fase:'grupos' },
-  { id:19, local:'Estados Unidos',  visita:'Paraguay',           grupo:'Grupo D', fecha:'2026-06-12T20:00:00', fase:'grupos' },
-  { id:20, local:'Australia',       visita:'Turquía',            grupo:'Grupo D', fecha:'2026-06-12T23:00:00', fase:'grupos' },
-  { id:21, local:'Turquía',         visita:'Paraguay',           grupo:'Grupo D', fecha:'2026-06-18T23:00:00', fase:'grupos' },
-  { id:22, local:'Estados Unidos',  visita:'Australia',          grupo:'Grupo D', fecha:'2026-06-19T14:00:00', fase:'grupos' },
-  { id:23, local:'Turquía',         visita:'Estados Unidos',     grupo:'Grupo D', fecha:'2026-06-25T21:00:00', fase:'grupos' },
-  { id:24, local:'Paraguay',        visita:'Australia',          grupo:'Grupo D', fecha:'2026-06-25T21:00:01', fase:'grupos' },
-  { id:25, local:'Alemania',        visita:'Curazao',            grupo:'Grupo E', fecha:'2026-06-14T12:00:00', fase:'grupos' },
-  { id:26, local:'Costa de Marfil', visita:'Ecuador',            grupo:'Grupo E', fecha:'2026-06-14T18:00:00', fase:'grupos' },
-  { id:27, local:'Alemania',        visita:'Costa de Marfil',    grupo:'Grupo E', fecha:'2026-06-20T15:00:00', fase:'grupos' },
-  { id:28, local:'Ecuador',         visita:'Curazao',            grupo:'Grupo E', fecha:'2026-06-20T19:00:00', fase:'grupos' },
-  { id:29, local:'Ecuador',         visita:'Alemania',           grupo:'Grupo E', fecha:'2026-06-25T15:00:00', fase:'grupos' },
-  { id:30, local:'Curazao',         visita:'Costa de Marfil',    grupo:'Grupo E', fecha:'2026-06-25T15:00:01', fase:'grupos' },
-  { id:31, local:'Países Bajos',    visita:'Japón',              grupo:'Grupo F', fecha:'2026-06-14T15:00:00', fase:'grupos' },
-  { id:32, local:'Suecia',          visita:'Túnez',              grupo:'Grupo F', fecha:'2026-06-14T21:00:00', fase:'grupos' },
-  { id:33, local:'Túnez',           visita:'Japón',              grupo:'Grupo F', fecha:'2026-06-19T23:00:00', fase:'grupos' },
-  { id:34, local:'Países Bajos',    visita:'Suecia',             grupo:'Grupo F', fecha:'2026-06-20T12:00:00', fase:'grupos' },
-  { id:35, local:'Japón',           visita:'Suecia',             grupo:'Grupo F', fecha:'2026-06-25T18:00:00', fase:'grupos' },
-  { id:36, local:'Túnez',           visita:'Países Bajos',       grupo:'Grupo F', fecha:'2026-06-25T18:00:01', fase:'grupos' },
-  { id:37, local:'Bélgica',         visita:'Egipto',             grupo:'Grupo G', fecha:'2026-06-15T14:00:00', fase:'grupos' },
-  { id:38, local:'Irán',            visita:'Nueva Zelanda',      grupo:'Grupo G', fecha:'2026-06-15T20:00:00', fase:'grupos' },
-  { id:39, local:'Bélgica',         visita:'Irán',               grupo:'Grupo G', fecha:'2026-06-21T14:00:00', fase:'grupos' },
-  { id:40, local:'Nueva Zelanda',   visita:'Egipto',             grupo:'Grupo G', fecha:'2026-06-21T20:00:00', fase:'grupos' },
-  { id:41, local:'Egipto',          visita:'Irán',               grupo:'Grupo G', fecha:'2026-06-26T22:00:00', fase:'grupos' },
-  { id:42, local:'Nueva Zelanda',   visita:'Bélgica',            grupo:'Grupo G', fecha:'2026-06-26T22:00:01', fase:'grupos' },
-  { id:43, local:'España',          visita:'Cabo Verde',         grupo:'Grupo H', fecha:'2026-06-15T11:00:00', fase:'grupos' },
-  { id:44, local:'Arabia Saudita',  visita:'Uruguay',            grupo:'Grupo H', fecha:'2026-06-15T17:00:00', fase:'grupos' },
-  { id:45, local:'España',          visita:'Arabia Saudita',     grupo:'Grupo H', fecha:'2026-06-21T11:00:00', fase:'grupos' },
-  { id:46, local:'Uruguay',         visita:'Cabo Verde',         grupo:'Grupo H', fecha:'2026-06-21T17:00:00', fase:'grupos' },
-  { id:47, local:'Uruguay',         visita:'España',             grupo:'Grupo H', fecha:'2026-06-26T19:00:00', fase:'grupos' },
-  { id:48, local:'Cabo Verde',      visita:'Arabia Saudita',     grupo:'Grupo H', fecha:'2026-06-26T19:00:01', fase:'grupos' },
-  { id:49, local:'Francia',         visita:'Senegal',            grupo:'Grupo I', fecha:'2026-06-16T14:00:00', fase:'grupos' },
-  { id:50, local:'Irak',            visita:'Noruega',            grupo:'Grupo I', fecha:'2026-06-16T17:00:00', fase:'grupos' },
-  { id:51, local:'Francia',         visita:'Irak',               grupo:'Grupo I', fecha:'2026-06-22T16:00:00', fase:'grupos' },
-  { id:52, local:'Noruega',         visita:'Senegal',            grupo:'Grupo I', fecha:'2026-06-22T19:00:00', fase:'grupos' },
-  { id:53, local:'Noruega',         visita:'Francia',            grupo:'Grupo I', fecha:'2026-06-26T14:00:00', fase:'grupos' },
-  { id:54, local:'Senegal',         visita:'Irak',               grupo:'Grupo I', fecha:'2026-06-26T14:00:01', fase:'grupos' },
-  { id:55, local:'Austria',         visita:'Jordania',           grupo:'Grupo J', fecha:'2026-06-15T23:00:00', fase:'grupos' },
-  { id:56, local:'Argentina',       visita:'Argelia',            grupo:'Grupo J', fecha:'2026-06-16T20:00:00', fase:'grupos' },
-  { id:57, local:'Argentina',       visita:'Austria',            grupo:'Grupo J', fecha:'2026-06-22T12:00:00', fase:'grupos' },
-  { id:58, local:'Jordania',        visita:'Argelia',            grupo:'Grupo J', fecha:'2026-06-22T22:00:00', fase:'grupos' },
-  { id:59, local:'Jordania',        visita:'Argentina',          grupo:'Grupo J', fecha:'2026-06-27T21:00:00', fase:'grupos' },
-  { id:60, local:'Argelia',         visita:'Austria',            grupo:'Grupo J', fecha:'2026-06-27T21:00:01', fase:'grupos' },
-  { id:61, local:'Portugal',        visita:'RD Congo',           grupo:'Grupo K', fecha:'2026-06-17T12:00:00', fase:'grupos' },
-  { id:62, local:'Uzbekistán',      visita:'Colombia',           grupo:'Grupo K', fecha:'2026-06-17T21:00:00', fase:'grupos' },
-  { id:63, local:'Portugal',        visita:'Uzbekistán',         grupo:'Grupo K', fecha:'2026-06-23T12:00:00', fase:'grupos' },
-  { id:64, local:'Colombia',        visita:'RD Congo',           grupo:'Grupo K', fecha:'2026-06-23T21:00:00', fase:'grupos' },
-  { id:65, local:'Colombia',        visita:'Portugal',           grupo:'Grupo K', fecha:'2026-06-27T18:30:00', fase:'grupos' },
-  { id:66, local:'RD Congo',        visita:'Uzbekistán',         grupo:'Grupo K', fecha:'2026-06-27T18:30:01', fase:'grupos' },
-  { id:67, local:'Inglaterra',      visita:'Croacia',            grupo:'Grupo L', fecha:'2026-06-17T15:00:00', fase:'grupos' },
-  { id:68, local:'Ghana',           visita:'Panamá',             grupo:'Grupo L', fecha:'2026-06-17T18:00:00', fase:'grupos' },
-  { id:69, local:'Inglaterra',      visita:'Ghana',              grupo:'Grupo L', fecha:'2026-06-23T15:00:00', fase:'grupos' },
-  { id:70, local:'Panamá',          visita:'Croacia',            grupo:'Grupo L', fecha:'2026-06-23T18:00:00', fase:'grupos' },
-  { id:71, local:'Panamá',          visita:'Inglaterra',         grupo:'Grupo L', fecha:'2026-06-27T16:00:00', fase:'grupos' },
-  { id:72, local:'Croacia',         visita:'Ghana',              grupo:'Grupo L', fecha:'2026-06-27T16:00:01', fase:'grupos' },
-  ...Array.from({length:16},(_,i)=>({id:101+i,local:'Por definir',visita:'Por definir',grupo:'16avos',fecha:'2026-06-28T00:00:00',fase:'16avos'})),
-  ...Array.from({length:8}, (_,i)=>({id:201+i,local:'Por definir',visita:'Por definir',grupo:'Octavos',fecha:'2026-07-04T00:00:00',fase:'octavos'})),
-  ...Array.from({length:4}, (_,i)=>({id:301+i,local:'Por definir',visita:'Por definir',grupo:'Cuartos',fecha:'2026-07-09T00:00:00',fase:'cuartos'})),
-  ...Array.from({length:2}, (_,i)=>({id:401+i,local:'Por definir',visita:'Por definir',grupo:'Semifinal',fecha:'2026-07-14T00:00:00',fase:'semis'})),
-  {id:501,local:'Por definir',visita:'Por definir',grupo:'Final',fecha:'2026-07-19T00:00:00',fase:'final'},
+const PARTIDOS_GRUPOS = [
+  { id:1,  local:'México',          visita:'Sudáfrica',            grupo:'Grupo A', fecha:'2026-06-11T14:00:00', fase:'grupos' },
+  { id:2,  local:'Corea del Sur',   visita:'Rep. Checa',           grupo:'Grupo A', fecha:'2026-06-11T21:00:00', fase:'grupos' },
+  { id:3,  local:'Rep. Checa',      visita:'Sudáfrica',            grupo:'Grupo A', fase:'grupos', fecha:'2026-06-18T11:00:00' },
+  { id:4,  local:'México',          visita:'Corea del Sur',        grupo:'Grupo A', fecha:'2026-06-18T20:00:00', fase:'grupos' },
+  { id:5,  local:'Rep. Checa',      visita:'México',               grupo:'Grupo A', fecha:'2026-06-24T20:00:00', fase:'grupos' },
+  { id:6,  local:'Sudáfrica',       visita:'Corea del Sur',        grupo:'Grupo A', fecha:'2026-06-24T20:00:01', fase:'grupos' },
+  { id:7,  local:'Canadá',          visita:'Bosnia y Herzegovina', grupo:'Grupo B', fecha:'2026-06-12T14:00:00', fase:'grupos' },
+  { id:8,  local:'Qatar',           visita:'Suiza',                grupo:'Grupo B', fecha:'2026-06-13T14:00:00', fase:'grupos' },
+  { id:9,  local:'Suiza',           visita:'Bosnia y Herzegovina', grupo:'Grupo B', fecha:'2026-06-18T14:00:00', fase:'grupos' },
+  { id:10, local:'Canadá',          visita:'Qatar',                grupo:'Grupo B', fecha:'2026-06-18T17:00:00', fase:'grupos' },
+  { id:11, local:'Suiza',           visita:'Canadá',               grupo:'Grupo B', fecha:'2026-06-24T14:00:00', fase:'grupos' },
+  { id:12, local:'Bosnia y Herzegovina', visita:'Qatar',           grupo:'Grupo B', fecha:'2026-06-24T14:00:01', fase:'grupos' },
+  { id:13, local:'Brasil',          visita:'Marruecos',            grupo:'Grupo C', fecha:'2026-06-13T17:00:00', fase:'grupos' },
+  { id:14, local:'Haití',           visita:'Escocia',              grupo:'Grupo C', fecha:'2026-06-13T20:00:00', fase:'grupos' },
+  { id:15, local:'Escocia',         visita:'Marruecos',            grupo:'Grupo C', fecha:'2026-06-19T17:00:00', fase:'grupos' },
+  { id:16, local:'Brasil',          visita:'Haití',                grupo:'Grupo C', fecha:'2026-06-19T20:00:00', fase:'grupos' },
+  { id:17, local:'Brasil',          visita:'Escocia',              grupo:'Grupo C', fecha:'2026-06-24T17:00:00', fase:'grupos' },
+  { id:18, local:'Marruecos',       visita:'Haití',                grupo:'Grupo C', fecha:'2026-06-24T17:00:01', fase:'grupos' },
+  { id:19, local:'Estados Unidos',  visita:'Paraguay',             grupo:'Grupo D', fecha:'2026-06-12T20:00:00', fase:'grupos' },
+  { id:20, local:'Australia',       visita:'Turquía',              grupo:'Grupo D', fecha:'2026-06-12T23:00:00', fase:'grupos' },
+  { id:21, local:'Turquía',         visita:'Paraguay',             grupo:'Grupo D', fecha:'2026-06-18T23:00:00', fase:'grupos' },
+  { id:22, local:'Estados Unidos',  visita:'Australia',            grupo:'Grupo D', fecha:'2026-06-19T14:00:00', fase:'grupos' },
+  { id:23, local:'Turquía',         visita:'Estados Unidos',       grupo:'Grupo D', fecha:'2026-06-25T21:00:00', fase:'grupos' },
+  { id:24, local:'Paraguay',        visita:'Australia',            grupo:'Grupo D', fecha:'2026-06-25T21:00:01', fase:'grupos' },
+  { id:25, local:'Alemania',        visita:'Curazao',              grupo:'Grupo E', fecha:'2026-06-14T12:00:00', fase:'grupos' },
+  { id:26, local:'Costa de Marfil', visita:'Ecuador',              grupo:'Grupo E', fecha:'2026-06-14T18:00:00', fase:'grupos' },
+  { id:27, local:'Alemania',        visita:'Costa de Marfil',      grupo:'Grupo E', fecha:'2026-06-20T15:00:00', fase:'grupos' },
+  { id:28, local:'Ecuador',         visita:'Curazao',              grupo:'Grupo E', fecha:'2026-06-20T19:00:00', fase:'grupos' },
+  { id:29, local:'Ecuador',         visita:'Alemania',             grupo:'Grupo E', fecha:'2026-06-25T15:00:00', fase:'grupos' },
+  { id:30, local:'Curazao',         visita:'Costa de Marfil',      grupo:'Grupo E', fecha:'2026-06-25T15:00:01', fase:'grupos' },
+  { id:31, local:'Países Bajos',    visita:'Japón',                grupo:'Grupo F', fecha:'2026-06-14T15:00:00', fase:'grupos' },
+  { id:32, local:'Suecia',          visita:'Túnez',                grupo:'Grupo F', fecha:'2026-06-14T21:00:00', fase:'grupos' },
+  { id:33, local:'Túnez',           visita:'Japón',                grupo:'Grupo F', fecha:'2026-06-19T23:00:00', fase:'grupos' },
+  { id:34, local:'Países Bajos',    visita:'Suecia',               grupo:'Grupo F', fecha:'2026-06-20T12:00:00', fase:'grupos' },
+  { id:35, local:'Japón',           visita:'Suecia',               grupo:'Grupo F', fecha:'2026-06-25T18:00:00', fase:'grupos' },
+  { id:36, local:'Túnez',           visita:'Países Bajos',         grupo:'Grupo F', fecha:'2026-06-25T18:00:01', fase:'grupos' },
+  { id:37, local:'Bélgica',         visita:'Egipto',               grupo:'Grupo G', fecha:'2026-06-15T14:00:00', fase:'grupos' },
+  { id:38, local:'Irán',            visita:'Nueva Zelanda',        grupo:'Grupo G', fecha:'2026-06-15T20:00:00', fase:'grupos' },
+  { id:39, local:'Bélgica',         visita:'Irán',                 grupo:'Grupo G', fecha:'2026-06-21T14:00:00', fase:'grupos' },
+  { id:40, local:'Nueva Zelanda',   visita:'Egipto',               grupo:'Grupo G', fecha:'2026-06-21T20:00:00', fase:'grupos' },
+  { id:41, local:'Egipto',          visita:'Irán',                 grupo:'Grupo G', fecha:'2026-06-26T22:00:00', fase:'grupos' },
+  { id:42, local:'Nueva Zelanda',   visita:'Bélgica',              grupo:'Grupo G', fecha:'2026-06-26T22:00:01', fase:'grupos' },
+  { id:43, local:'España',          visita:'Cabo Verde',           grupo:'Grupo H', fecha:'2026-06-15T11:00:00', fase:'grupos' },
+  { id:44, local:'Arabia Saudita',  visita:'Uruguay',              grupo:'Grupo H', fecha:'2026-06-15T17:00:00', fase:'grupos' },
+  { id:45, local:'España',          visita:'Arabia Saudita',       grupo:'Grupo H', fecha:'2026-06-21T11:00:00', fase:'grupos' },
+  { id:46, local:'Uruguay',         visita:'Cabo Verde',           grupo:'Grupo H', fecha:'2026-06-21T17:00:00', fase:'grupos' },
+  { id:47, local:'Uruguay',         visita:'España',               grupo:'Grupo H', fecha:'2026-06-26T19:00:00', fase:'grupos' },
+  { id:48, local:'Cabo Verde',      visita:'Arabia Saudita',       grupo:'Grupo H', fecha:'2026-06-26T19:00:01', fase:'grupos' },
+  { id:49, local:'Francia',         visita:'Senegal',              grupo:'Grupo I', fecha:'2026-06-16T14:00:00', fase:'grupos' },
+  { id:50, local:'Irak',            visita:'Noruega',              grupo:'Grupo I', fecha:'2026-06-16T17:00:00', fase:'grupos' },
+  { id:51, local:'Francia',         visita:'Irak',                 grupo:'Grupo I', fecha:'2026-06-22T16:00:00', fase:'grupos' },
+  { id:52, local:'Noruega',         visita:'Senegal',              grupo:'Grupo I', fecha:'2026-06-22T19:00:00', fase:'grupos' },
+  { id:53, local:'Noruega',         visita:'Francia',              grupo:'Grupo I', fecha:'2026-06-26T14:00:00', fase:'grupos' },
+  { id:54, local:'Senegal',         visita:'Irak',                 grupo:'Grupo I', fecha:'2026-06-26T14:00:01', fase:'grupos' },
+  { id:55, local:'Austria',         visita:'Jordania',             grupo:'Grupo J', fecha:'2026-06-15T23:00:00', fase:'grupos' },
+  { id:56, local:'Argentina',       visita:'Argelia',              grupo:'Grupo J', fecha:'2026-06-16T20:00:00', fase:'grupos' },
+  { id:57, local:'Argentina',       visita:'Austria',              grupo:'Grupo J', fecha:'2026-06-22T12:00:00', fase:'grupos' },
+  { id:58, local:'Jordania',        visita:'Argelia',              grupo:'Grupo J', fecha:'2026-06-22T22:00:00', fase:'grupos' },
+  { id:59, local:'Jordania',        visita:'Argentina',            grupo:'Grupo J', fecha:'2026-06-27T21:00:00', fase:'grupos' },
+  { id:60, local:'Argelia',         visita:'Austria',              grupo:'Grupo J', fecha:'2026-06-27T21:00:01', fase:'grupos' },
+  { id:61, local:'Portugal',        visita:'RD Congo',             grupo:'Grupo K', fecha:'2026-06-17T12:00:00', fase:'grupos' },
+  { id:62, local:'Uzbekistán',      visita:'Colombia',             grupo:'Grupo K', fecha:'2026-06-17T21:00:00', fase:'grupos' },
+  { id:63, local:'Portugal',        visita:'Uzbekistán',           grupo:'Grupo K', fecha:'2026-06-23T12:00:00', fase:'grupos' },
+  { id:64, local:'Colombia',        visita:'RD Congo',             grupo:'Grupo K', fecha:'2026-06-23T21:00:00', fase:'grupos' },
+  { id:65, local:'Colombia',        visita:'Portugal',             grupo:'Grupo K', fecha:'2026-06-27T18:30:00', fase:'grupos' },
+  { id:66, local:'RD Congo',        visita:'Uzbekistán',           grupo:'Grupo K', fecha:'2026-06-27T18:30:01', fase:'grupos' },
+  { id:67, local:'Inglaterra',      visita:'Croacia',              grupo:'Grupo L', fecha:'2026-06-17T15:00:00', fase:'grupos' },
+  { id:68, local:'Ghana',           visita:'Panamá',               grupo:'Grupo L', fecha:'2026-06-17T18:00:00', fase:'grupos' },
+  { id:69, local:'Inglaterra',      visita:'Ghana',                grupo:'Grupo L', fecha:'2026-06-23T15:00:00', fase:'grupos' },
+  { id:70, local:'Panamá',          visita:'Croacia',              grupo:'Grupo L', fecha:'2026-06-23T18:00:00', fase:'grupos' },
+  { id:71, local:'Panamá',          visita:'Inglaterra',           grupo:'Grupo L', fecha:'2026-06-27T16:00:00', fase:'grupos' },
+  { id:72, local:'Croacia',         visita:'Ghana',                grupo:'Grupo L', fecha:'2026-06-27T16:00:01', fase:'grupos' },
 ];
 
 const BANDERAS = {
@@ -109,7 +104,6 @@ export default function Predicciones() {
   const [tab, setTab]               = useState('grupos');
 
   useEffect(() => {
-    // Solo carga DB una vez para poder guardar
     api.getPartidos().then(d => { if (Array.isArray(d)) setDbPartidos(d); });
     api.misPredicciones().then(d => {
       if (!Array.isArray(d)) return;
@@ -122,20 +116,21 @@ export default function Predicciones() {
     });
   }, []);
 
+  // Para grupos: usa array local + busca UUID en DB por nombre
   const getDbId = p => {
     const r = dbPartidos.find(d => d.equipo_local === p.local && d.equipo_visitante === p.visita);
     return r?.id;
   };
 
-  const onChange = (localId, team, val) => {
+  const onChange = (id, team, val) => {
     const v = Math.max(0, Math.min(99, parseInt(val)||0));
-    setPreds(prev => ({...prev, [localId]: {...prev[localId], [team]: v}}));
+    setPreds(prev => ({...prev, [id]: {...prev[id], [team]: v}}));
   };
 
   const guardar = async p => {
-    const dbId = getDbId(p);
+    const dbId = p.dbId || getDbId(p);
     if (!dbId) { alert('Partido no disponible aún'); return; }
-    const pred = preds[p.id] || {s1:0, s2:0};
+    const pred = preds[p.id] || preds[dbId] || {s1:0, s2:0};
     setGuardando(prev => ({...prev, [p.id]: true}));
     const res = await api.guardarPrediccion(dbId, pred.s1, pred.s2);
     setGuardando(prev => ({...prev, [p.id]: false}));
@@ -147,17 +142,36 @@ export default function Predicciones() {
   const tabs = ['grupos','16avos','octavos','cuartos','semis','final'];
   const tabLabel = {grupos:'Grupos','16avos':'16avos',octavos:'Octavos',cuartos:'Cuartos',semis:'Semis',final:'Final'};
 
-  const filtrados = PARTIDOS.filter(p => p.fase === tab).sort((a,b) => new Date(a.fecha)-new Date(b.fecha));
+  // Para eliminatorias: usa dbPartidos directamente
+  const getFiltrados = () => {
+    if (tab === 'grupos') {
+      return PARTIDOS_GRUPOS.sort((a,b) => new Date(a.fecha)-new Date(b.fecha));
+    }
+    return dbPartidos
+      .filter(p => p.fase === tab)
+      .sort((a,b) => new Date(a.fecha_hora)-new Date(b.fecha_hora))
+      .map(p => ({
+        id: p.id,
+        dbId: p.id,
+        local: p.equipo_local,
+        visita: p.equipo_visitante,
+        grupo: p.grupo,
+        fecha: p.fecha_hora,
+        fase: p.fase,
+      }));
+  };
+
+  const filtrados = getFiltrados();
+
   const porFecha = filtrados.reduce((acc,p) => {
-    const k = p.fecha.split('T')[0];
-    if (!acc[k]) acc[k] = [];
-    acc[k].push(p);
+    const fechaKey = tab === 'grupos' ? p.fecha.split('T')[0] : p.fecha.split('T')[0];
+    if (!acc[fechaKey]) acc[fechaKey] = [];
+    acc[fechaKey].push(p);
     return acc;
   }, {});
 
   return (
     <div style={{minHeight:'100vh',background:'#0d2137',color:'#fff',paddingBottom:80}}>
-
       <div style={{background:'#1a7a55',padding:'14px 16px'}}>
         <h1 style={{margin:0,fontSize:16,fontWeight:700,color:'#e0f5ec'}}>Mis predicciones</h1>
         <p style={{margin:'2px 0 0',fontSize:12,color:'#8fe0c0'}}>Sector las Brisas · Mundial 2026</p>
@@ -186,7 +200,7 @@ export default function Predicciones() {
 
             {lista.map(p => {
               const porDefinir = p.local === 'Por definir';
-              const dbId = getDbId(p);
+              const dbId = p.dbId || getDbId(p);
               const pred = preds[p.id] || preds[dbId] || {s1:0, s2:0};
               const yaGuardado = !!(guardados[dbId] || guardados[p.id]);
               const cargando = !!guardando[p.id];
@@ -232,25 +246,4 @@ export default function Predicciones() {
                   </div>
 
                   {!porDefinir && (
-                    <button onClick={()=>guardar(p)} disabled={cargando} style={{
-                      width:'100%',marginTop:10,padding:'10px',
-                      background:yaGuardado?'#0e3d2a':'#1a7a55',
-                      color:yaGuardado?'#3ddc97':'#fff',
-                      fontWeight:600,fontSize:12,
-                      border:yaGuardado?'1px solid #3ddc97':'none',
-                      borderRadius:8,cursor:cargando?'wait':'pointer',
-                      opacity:cargando?0.6:1,
-                    }}>
-                      {cargando?'Guardando...':yaGuardado?'✓ Guardado':'Guardar predicción'}
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ))}
-      </div>
-      <NavBottom />
-    </div>
-  );
-}
+                    <button onClick={()=>guardar(p)} disabled={car
