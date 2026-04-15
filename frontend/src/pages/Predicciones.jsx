@@ -114,7 +114,7 @@ export default function Predicciones() {
       });
       setPreds(pm); setGuardados(gm);
     });
-  }, []);
+  }, [tab]);
 
   // Para grupos: usa array local + busca UUID en DB por nombre
   const getDbId = p => {
