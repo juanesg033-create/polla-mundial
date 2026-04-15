@@ -3,7 +3,23 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import NavBottom from '../components/NavBottom';
 
+const BANDERAS = {
+  'México':'mx','Sudáfrica':'za','Corea del Sur':'kr','Rep. Checa':'cz',
+  'Canadá':'ca','Bosnia y Herzegovina':'ba','Qatar':'qa','Suiza':'ch',
+  'Brasil':'br','Marruecos':'ma','Haití':'ht','Escocia':'gb-sct',
+  'Estados Unidos':'us','Paraguay':'py','Australia':'au','Turquía':'tr',
+  'Alemania':'de','Curazao':'cw','Costa de Marfil':'ci','Ecuador':'ec',
+  'Países Bajos':'nl','Japón':'jp','Suecia':'se','Túnez':'tn',
+  'Bélgica':'be','Egipto':'eg','Irán':'ir','Nueva Zelanda':'nz',
+  'España':'es','Cabo Verde':'cv','Arabia Saudita':'sa','Uruguay':'uy',
+  'Francia':'fr','Senegal':'sn','Irak':'iq','Noruega':'no',
+  'Austria':'at','Jordania':'jo','Argentina':'ar','Argelia':'dz',
+  'Portugal':'pt','RD Congo':'cd','Uzbekistán':'uz','Colombia':'co',
+  'Inglaterra':'gb-eng','Croacia':'hr','Ghana':'gh','Panamá':'pa',
+};
+
 const fmt = n => '$' + Math.round(n).toLocaleString('es-CO');
+const flag = n => BANDERAS[n] ? `https://flagcdn.com/w40/${BANDERAS[n]}.png` : null;
 
 export default function Admin() {
   const { usuario, logout } = useAuth();
@@ -18,7 +34,8 @@ export default function Admin() {
   const [mostrarForm, setMostrarForm] = useState(false);
   const [msg, setMsg] = useState('');
   const [resultados, setResultados] = useState({});
-  const [confirmar, setConfirmar] = useState(null); // { id, nombre }
+  const [confirmar, setConfirmar] = useState(null);
+  const [equiposEdit, setEquiposEdit] = useState({});
 
   useEffect(() => {
     api.getUsuarios().then(d => setUsuarios(Array.isArray(d) ? d : []));
@@ -67,24 +84,32 @@ export default function Admin() {
     api.getPartidos().then(d => setPartidos(Array.isArray(d) ? d : []));
   };
 
+  const actualizarEquipos = async (partido) => {
+    const e = equiposEdit[partido.id] || {};
+    const local = e.local ?? partido.equipo_local;
+    const visita = e.visita ?? partido.equipo_visitante;
+    const res = await api.actualizarEquipos(partido.id, local, visita);
+    if (res.error) { setMsg('Error: ' + res.error); return; }
+    setMsg(`✓ ${local} vs ${visita} actualizado`);
+    api.getPartidos().then(d => setPartidos(Array.isArray(d) ? d : []));
+    setEquiposEdit(prev => { const n = {...prev}; delete n[partido.id]; return n; });
+  };
+
+  const porDefinir = partidos.filter(p =>
+    p.equipo_local === 'Por definir' || p.equipo_visitante === 'Por definir'
+  );
+
   return (
     <div>
-      {/* Modal confirmación eliminar */}
       {confirmar && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}>
           <div style={{ background: 'white', borderRadius: 16, padding: '24px', width: '100%', maxWidth: 320, textAlign: 'center' }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
             <h3 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 8px' }}>¿Eliminar participante?</h3>
-            <p style={{ fontSize: 13, color: '#666', margin: '0 0 20px' }}>
-              Vas a eliminar a <strong>{confirmar.nombre}</strong> y todas sus predicciones. Esta acción no se puede deshacer.
-            </p>
+            <p style={{ fontSize: 13, color: '#666', margin: '0 0 20px' }}>Vas a eliminar a <strong>{confirmar.nombre}</strong> y todas sus predicciones. Esta acción no se puede deshacer.</p>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setConfirmar(null)} style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid #eee', background: '#fafafa', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>
-                Cancelar
-              </button>
-              <button onClick={eliminarUser} style={{ flex: 1, padding: '10px', borderRadius: 8, border: 'none', background: '#E24B4A', color: 'white', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>
-                Sí, eliminar
-              </button>
+              <button onClick={() => setConfirmar(null)} style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid #eee', background: '#fafafa', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>Cancelar</button>
+              <button onClick={eliminarUser} style={{ flex: 1, padding: '10px', borderRadius: 8, border: 'none', background: '#E24B4A', color: 'white', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>Sí, eliminar</button>
             </div>
           </div>
         </div>
@@ -106,8 +131,8 @@ export default function Admin() {
             </div>
           ))}
         </div>
-        <div style={{ display: 'flex' }}>
-          {[['usuarios','Participantes'],['pozo','Pozo'],['resultados','Resultados']].map(([k,v]) => (
+        <div style={{ display: 'flex', overflowX: 'auto' }}>
+          {[['usuarios','Participantes'],['pozo','Pozo'],['resultados','Resultados'],['equipos','Equipos']].map(([k,v]) => (
             <button key={k} onClick={() => setTab(k)} style={{ padding: '9px 14px', fontSize: 11, fontWeight: 600, color: tab === k ? '#E1F5EE' : '#9FE1CB', background: 'none', border: 'none', borderBottom: tab === k ? '2px solid #E1F5EE' : '2px solid transparent', cursor: 'pointer', whiteSpace: 'nowrap' }}>{v}</button>
           ))}
         </div>
@@ -120,11 +145,8 @@ export default function Admin() {
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
               <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>Usuarios registrados</p>
-              <button className="btn-outline" style={{ width: 'auto', padding: '6px 14px', fontSize: 12 }} onClick={() => setMostrarForm(!mostrarForm)}>
-                {mostrarForm ? 'Cancelar' : '+ Agregar'}
-              </button>
+              <button className="btn-outline" style={{ width: 'auto', padding: '6px 14px', fontSize: 12 }} onClick={() => setMostrarForm(!mostrarForm)}>{mostrarForm ? 'Cancelar' : '+ Agregar'}</button>
             </div>
-
             {mostrarForm && (
               <div className="card" style={{ marginBottom: 10, background: '#EEEDFE', border: '1px solid #AFA9EC' }}>
                 <div className="campo"><label>Nombre para mostrar en la app</label><input type="text" placeholder="Ej. María Inés Restrepo" value={nuevoNombre} onChange={e => setNuevoNombre(e.target.value)} /></div>
@@ -134,7 +156,6 @@ export default function Admin() {
                 <button className="btn-primary" onClick={crearUsuario}>Crear participante</button>
               </div>
             )}
-
             {usuarios.filter(u => !u.es_admin).map(u => (
               <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #f5f5f5' }}>
                 <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#E6F1FB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: '#0C447C', flexShrink: 0 }}>{initials(u.nombre_display)}</div>
@@ -143,12 +164,8 @@ export default function Admin() {
                   <p style={{ fontSize: 10, color: '#999', margin: 0 }}>@{u.usuario}</p>
                 </div>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: u.activo ? '#1D9E75' : '#E24B4A', flexShrink: 0 }} />
-                <button onClick={() => toggleUser(u.id)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #eee', background: '#fafafa', cursor: 'pointer', fontSize: 14 }}>
-                  {u.activo ? '🔒' : '✓'}
-                </button>
-                <button onClick={() => setConfirmar({ id: u.id, nombre: u.nombre_display })} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #fdd', background: '#fff5f5', cursor: 'pointer', fontSize: 14, color: '#E24B4A' }}>
-                  ✕
-                </button>
+                <button onClick={() => toggleUser(u.id)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #eee', background: '#fafafa', cursor: 'pointer', fontSize: 14 }}>{u.activo ? '🔒' : '✓'}</button>
+                <button onClick={() => setConfirmar({ id: u.id, nombre: u.nombre_display })} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid #fdd', background: '#fff5f5', cursor: 'pointer', fontSize: 14, color: '#E24B4A' }}>✕</button>
               </div>
             ))}
             <button className="btn-outline" style={{ marginTop: 16 }} onClick={logout}>Cerrar sesión</button>
@@ -179,7 +196,7 @@ export default function Admin() {
         {tab === 'resultados' && (
           <>
             <p style={{ fontSize: 11, color: '#999', textTransform: 'uppercase', fontWeight: 600, margin: '0 0 10px' }}>Ingresar resultados</p>
-            {partidos.filter(p => !p.finalizado).map(p => (
+            {partidos.filter(p => !p.finalizado && p.equipo_local !== 'Por definir').map(p => (
               <div key={p.id} className="card">
                 <p style={{ fontSize: 12, fontWeight: 600, margin: '0 0 10px', color: '#999' }}>{p.grupo} · {new Date(p.fecha_hora).toLocaleDateString('es-CO')}</p>
                 <div className="equipos-row">
@@ -191,12 +208,48 @@ export default function Admin() {
                   </div>
                   <div className="equipo"><span className="equipo-nombre">{p.equipo_visitante}</span></div>
                 </div>
-                <button className="btn-primary" style={{ marginTop: 10, fontSize: 12, padding: '9px' }} onClick={() => ingresarResult(p)}>
-                  Registrar resultado
-                </button>
+                <button className="btn-primary" style={{ marginTop: 10, fontSize: 12, padding: '9px' }} onClick={() => ingresarResult(p)}>Registrar resultado</button>
               </div>
             ))}
-            {partidos.filter(p => !p.finalizado).length === 0 && <p style={{ textAlign: 'center', color: '#999', fontSize: 13 }}>No hay partidos pendientes.</p>}
+          </>
+        )}
+
+        {tab === 'equipos' && (
+          <>
+            <p style={{ fontSize: 11, color: '#999', textTransform: 'uppercase', fontWeight: 600, margin: '0 0 10px' }}>Definir equipos eliminatorias ({porDefinir.length} partidos)</p>
+            {porDefinir.length === 0 && <p style={{ textAlign: 'center', color: '#1D9E75', fontSize: 13 }}>✓ Todos los equipos están definidos</p>}
+            {porDefinir.map(p => {
+              const e = equiposEdit[p.id] || {};
+              const localVal = e.local !== undefined ? e.local : p.equipo_local;
+              const visitaVal = e.visita !== undefined ? e.visita : p.equipo_visitante;
+              return (
+                <div key={p.id} className="card" style={{ marginBottom: 10 }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: '#999', margin: '0 0 10px' }}>{p.grupo} · {new Date(p.fecha_hora).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })}</p>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                        {flag(localVal) ? <img src={flag(localVal)} alt={localVal} style={{ width: 24, height: 16, objectFit: 'cover', borderRadius: 2 }} /> : <div style={{ width: 24, height: 16, background: '#eee', borderRadius: 2 }} />}
+                        <span style={{ fontSize: 10, color: '#999' }}>Local</span>
+                      </div>
+                      <input type="text" value={localVal === 'Por definir' ? '' : localVal} placeholder="Equipo local"
+                        onChange={e => setEquiposEdit(prev => ({ ...prev, [p.id]: { ...prev[p.id], local: e.target.value } }))}
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid #ddd', fontSize: 12 }} />
+                    </div>
+                    <span style={{ color: '#ccc', fontWeight: 700, flexShrink: 0 }}>vs</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                        {flag(visitaVal) ? <img src={flag(visitaVal)} alt={visitaVal} style={{ width: 24, height: 16, objectFit: 'cover', borderRadius: 2 }} /> : <div style={{ width: 24, height: 16, background: '#eee', borderRadius: 2 }} />}
+                        <span style={{ fontSize: 10, color: '#999' }}>Visitante</span>
+                      </div>
+                      <input type="text" value={visitaVal === 'Por definir' ? '' : visitaVal} placeholder="Equipo visitante"
+                        onChange={e => setEquiposEdit(prev => ({ ...prev, [p.id]: { ...prev[p.id], visita: e.target.value } }))}
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid #ddd', fontSize: 12 }} />
+                    </div>
+                  </div>
+                  <button className="btn-primary" style={{ fontSize: 12, padding: '9px' }} onClick={() => actualizarEquipos(p)}>Guardar equipos</button>
+                </div>
+              );
+            })}
           </>
         )}
       </div>
