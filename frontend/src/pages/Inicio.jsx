@@ -3,7 +3,23 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import NavBottom from '../components/NavBottom';
 
+const BANDERAS = {
+  'México':'mx','Sudáfrica':'za','Corea del Sur':'kr','Rep. Checa':'cz',
+  'Canadá':'ca','Bosnia y Herzegovina':'ba','Qatar':'qa','Suiza':'ch',
+  'Brasil':'br','Marruecos':'ma','Haití':'ht','Escocia':'gb-sct',
+  'Estados Unidos':'us','Paraguay':'py','Australia':'au','Turquía':'tr',
+  'Alemania':'de','Curazao':'cw','Costa de Marfil':'ci','Ecuador':'ec',
+  'Países Bajos':'nl','Japón':'jp','Suecia':'se','Túnez':'tn',
+  'Bélgica':'be','Egipto':'eg','Irán':'ir','Nueva Zelanda':'nz',
+  'España':'es','Cabo Verde':'cv','Arabia Saudita':'sa','Uruguay':'uy',
+  'Francia':'fr','Senegal':'sn','Irak':'iq','Noruega':'no',
+  'Austria':'at','Jordania':'jo','Argentina':'ar','Argelia':'dz',
+  'Portugal':'pt','RD Congo':'cd','Uzbekistán':'uz','Colombia':'co',
+  'Inglaterra':'gb-eng','Croacia':'hr','Ghana':'gh','Panamá':'pa',
+};
+
 const fmt = n => '$' + Math.round(n).toLocaleString('es-CO');
+const flag = nombre => BANDERAS[nombre] ? `https://flagcdn.com/w40/${BANDERAS[nombre]}.png` : null;
 
 export default function Inicio() {
   const { usuario } = useAuth();
@@ -87,9 +103,15 @@ export default function Inicio() {
               <span className="badge badge-green">Próximo</span>
             </div>
             <div className="equipos-row">
-              <div className="equipo"><span className="equipo-nombre">{p.equipo_local}</span></div>
+              <div className="equipo">
+                {flag(p.equipo_local) && <img src={flag(p.equipo_local)} alt={p.equipo_local} style={{width:28,height:19,objectFit:'cover',borderRadius:2,display:'block',margin:'0 auto 3px'}}/>}
+                <span className="equipo-nombre">{p.equipo_local}</span>
+              </div>
               <span className="vs">vs</span>
-              <div className="equipo"><span className="equipo-nombre">{p.equipo_visitante}</span></div>
+              <div className="equipo">
+                {flag(p.equipo_visitante) && <img src={flag(p.equipo_visitante)} alt={p.equipo_visitante} style={{width:28,height:19,objectFit:'cover',borderRadius:2,display:'block',margin:'0 auto 3px'}}/>}
+                <span className="equipo-nombre">{p.equipo_visitante}</span>
+              </div>
             </div>
           </div>
         ))}
