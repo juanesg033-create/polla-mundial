@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import NavBottom from '../components/NavBottom';
+// v2
 
 const PARTIDOS_GRUPOS = [
   { id:1,  local:'México',          visita:'Sudáfrica',            grupo:'Grupo A', fecha:'2026-06-11T14:00:00', fase:'grupos' },
